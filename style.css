@@ -454,6 +454,23 @@ body {
   white-space: nowrap;
 }
 
+.ship-select.unavailable {
+  opacity: 0.6;
+  cursor: default;
+  background: #f8eeee;
+  border-color: #d09090;
+}
+
+.ship-select.unavailable input { cursor: default; }
+
+.ship-unavail-reason {
+  width: 100%;
+  font-size: 11px;
+  color: var(--red);
+  font-style: italic;
+  margin-top: 2px;
+}
+
 .no-ships {
   font-size: 12px;
   font-style: italic;

@@ -510,6 +510,7 @@ function renderMissionDetail(container, route, dl, color, dlabel) {
   const mission   = route.missions.find(m => m.id === selectedMissionId);
   const dangerous = dl > 0;
   const docked    = state.fleet.filter(s => s.status === 'docked');
+  const available = state.fleet.filter(s => s.status !== 'at_sea'); // docked + damaged
   const selArr    = [...selectedShipIds];
   const odds      = (selArr.length && dangerous) ? calculateOdds(selArr, route.id, fireBarrelsUsed) : null;
   const minutes   = selArr.length ? calcMissionMinutes(selArr, mission.baseMinutes) : null;
@@ -534,17 +535,19 @@ function renderMissionDetail(container, route, dl, color, dlabel) {
   if (dangerous) html += `<div class="battle-warning">⚔ Rotta pericolosa — si combatte prima di commerciare. Forza nemica: <strong>${route.enemyStrength}</strong></div>`;
 
   html += `<h4 class="ship-select-title">Seleziona le navi:</h4>`;
-  if (!docked.length) {
+  if (!available.length) {
     html += `<p class="no-ships">Nessuna nave disponibile in porto.</p>`;
   } else {
-    docked.forEach(ship => {
-      const st  = SHIP_TYPES[ship.type];
-      const chk = selectedShipIds.has(ship.id);
-      html += `<label class="ship-select ${chk ? 'selected' : ''}">
-        <input type="checkbox" data-ship="${ship.id}" ${chk ? 'checked' : ''}>
+    available.forEach(ship => {
+      const st       = SHIP_TYPES[ship.type];
+      const chk      = selectedShipIds.has(ship.id);
+      const isDamaged = ship.status === 'damaged';
+      html += `<label class="ship-select ${chk ? 'selected' : ''} ${isDamaged ? 'unavailable' : ''}">
+        <input type="checkbox" data-ship="${ship.id}" ${chk ? 'checked' : ''} ${isDamaged ? 'disabled' : ''}>
         <span class="ship-name">${ship.name}</span>
         <span class="ship-type-badge">${st.name}</span>
         <span class="ship-mini-stats">💥${st.firepower} 🛡${st.hull} 💨${st.speed}</span>
+        ${isDamaged ? `<span class="ship-unavail-reason">🔴 Danneggiata — ripara prima (${st.repairCost} ◆)</span>` : ''}
       </label>`;
     });
   }
