@@ -65,8 +65,15 @@ const SHIP_TYPES = {
 
 const CARGO_LABELS = { tobacco: 'Tabacco', wine: 'Vino', cocoa: 'Cacao' };
 
+// Route unlock prerequisites: complete N missions on the required route to unlock.
+const UNLOCK_CONDITIONS = {
+  havana_tortuga:     { prereq: 'nassau_havana',  needed: 3 },
+  tortuga_port_royal: { prereq: 'nassau_tortuga', needed: 3 },
+  havana_port_royal:  { prereq: 'havana_tortuga', needed: 3 },
+};
+
 const INITIAL_STATE = {
-  version: '1.0',
+  version: '1.1',
   player: { reales: 500, gemmes: 20, cargo: { tobacco: 5, wine: 5, cocoa: 3 }, fireBarrels: 1 },
   fleet: [
     { id: 'ship_001', name: 'La Speranza',  type: 'schooner', status: 'docked', damage: 0 },
@@ -74,11 +81,11 @@ const INITIAL_STATE = {
     { id: 'ship_003', name: 'San Cristóbal', type: 'gunboat',  status: 'docked', damage: 0 },
   ],
   routes: {
-    nassau_havana:      { dangerLevel: 0, unlocked: true },
-    nassau_tortuga:     { dangerLevel: 0, unlocked: true },
-    havana_tortuga:     { dangerLevel: 1, unlocked: true },
-    tortuga_port_royal: { dangerLevel: 1, unlocked: true },
-    havana_port_royal:  { dangerLevel: 2, unlocked: true },
+    nassau_havana:      { dangerLevel: 0, unlocked: true,  missionsCompleted: 0 },
+    nassau_tortuga:     { dangerLevel: 0, unlocked: true,  missionsCompleted: 0 },
+    havana_tortuga:     { dangerLevel: 1, unlocked: false, missionsCompleted: 0 },
+    tortuga_port_royal: { dangerLevel: 1, unlocked: false, missionsCompleted: 0 },
+    havana_port_royal:  { dangerLevel: 2, unlocked: false, missionsCompleted: 0 },
   },
   activeMissions: [],
   unlockedPorts: ['nassau', 'havana', 'tortuga', 'port_royal'],
@@ -95,9 +102,18 @@ function loadState() {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     state = raw ? JSON.parse(raw) : deepClone(INITIAL_STATE);
+    migrateSave();
   } catch (_) {
     state = deepClone(INITIAL_STATE);
   }
+}
+
+// Forward-migrate older saves to add new fields without losing progress.
+function migrateSave() {
+  Object.keys(state.routes).forEach(id => {
+    if (state.routes[id].missionsCompleted === undefined)
+      state.routes[id].missionsCompleted = 0;
+  });
 }
 
 function saveState() {
@@ -232,8 +248,25 @@ function collectMission(activeMissionId) {
     reward.cargo ? Object.entries(reward.cargo).map(([t, a]) => `${a} ${CARGO_LABELS[t]}`).join(', ') : '',
   ].filter(Boolean).join(' + ');
 
+  // Track progress and check for route unlocks
+  const rs = state.routes[am.routeId];
+  if (rs) rs.missionsCompleted = (rs.missionsCompleted || 0) + 1;
+  checkRouteUnlocks();
+
   addLog(`✅ ${am.missionName} completata! Bottino: ${parts}`);
   saveState();
+}
+
+function checkRouteUnlocks() {
+  Object.entries(UNLOCK_CONDITIONS).forEach(([routeId, { prereq, needed }]) => {
+    const rs = state.routes[routeId];
+    if (rs.unlocked) return;
+    const done = state.routes[prereq]?.missionsCompleted || 0;
+    if (done >= needed) {
+      rs.unlocked = true;
+      addLog(`🗺 Nuova rotta sbloccata: ${ROUTES[routeId].label}!`);
+    }
+  });
 }
 
 function repairShip(shipId) {
@@ -334,10 +367,29 @@ function renderMap() {
 
   // Routes
   Object.values(ROUTES).forEach(route => {
-    if (!state.routes[route.id]?.unlocked) return;
     const [p1id, p2id] = route.ports;
     const p1 = PORTS[p1id], p2 = PORTS[p2id];
-    const dl    = state.routes[route.id].dangerLevel;
+    const routeState = state.routes[route.id];
+    const mx = (p1.x + p2.x) / 2;
+    const my = (p1.y + p2.y) / 2;
+
+    // Locked route — show greyed out with progress indicator
+    if (!routeState.unlocked) {
+      const cond    = UNLOCK_CONDITIONS[route.id];
+      const done    = cond ? (state.routes[cond.prereq]?.missionsCompleted || 0) : 0;
+      const needed  = cond?.needed || 3;
+      const lockedLine = svgEl('line');
+      svgAttr(lockedLine, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
+        stroke: '#7a8a95', 'stroke-width': 1.5, 'stroke-dasharray': '5,9', opacity: 0.35 });
+      svg.appendChild(lockedLine);
+      svgText(svg, `🔒 ${done}/${needed}`, mx, my + 4, {
+        'text-anchor': 'middle', 'font-size': 10.5, fill: '#4a5a65',
+        'font-family': 'Georgia, serif', opacity: 0.6,
+      });
+      return;
+    }
+
+    const dl    = routeState.dangerLevel;
     const color = DANGER_COLOR[dl];
     const isSel = route.id === selectedRouteId;
     const active = state.activeMissions.some(m => m.routeId === route.id);
@@ -356,9 +408,6 @@ function renderMap() {
       stroke: 'transparent', 'stroke-width': 24,
       class: 'route-hit', 'data-route': route.id, cursor: 'pointer' });
     svg.appendChild(hit);
-
-    const mx = (p1.x + p2.x) / 2;
-    const my = (p1.y + p2.y) / 2;
 
     if (active) {
       const pulse = svgEl('circle');
