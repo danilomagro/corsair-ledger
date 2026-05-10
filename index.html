@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Corsair Ledger</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header id="header">
+    <h1 id="game-title">CORSAIR LEDGER</h1>
+    <div id="resources">
+      <span class="resource">
+        <span class="res-icon">⚜</span>
+        <span id="res-reales">0</span>
+        <span class="res-label">Reales</span>
+      </span>
+      <span class="resource">
+        <span class="res-icon">◆</span>
+        <span id="res-gemmes">0</span>
+        <span class="res-label">Gemmes</span>
+      </span>
+      <span class="resource">
+        <span class="res-icon">🔥</span>
+        <span id="res-barrels">0</span>
+        <span class="res-label">Barili</span>
+      </span>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <section id="map-section">
+      <div id="map-container">
+        <!-- SVG injected by render.js -->
+      </div>
+    </section>
+
+    <section id="bottom-section">
+
+      <div id="fleet-panel">
+        <h2 class="panel-title">FLOTTA</h2>
+        <div id="fleet-list"></div>
+      </div>
+
+      <div id="detail-panel">
+        <div id="detail-content">
+          <p class="placeholder">Seleziona una rotta sulla mappa per iniziare.</p>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <footer id="footer">
+    <div id="footer-left">
+      <button id="btn-save-export" class="btn-footer">💾 Backup</button>
+      <label class="btn-footer" id="btn-import-label">
+        📂 Import
+        <input type="file" id="import-file" accept=".json">
+      </label>
+      <button id="btn-reset" class="btn-footer btn-danger">⚠ Reset</button>
+    </div>
+    <div id="inventory-display"></div>
+    <div id="footer-right">
+      <button id="btn-log" class="btn-footer">📜 Log</button>
+    </div>
+  </footer>
+
+  <!-- Event log overlay -->
+  <div id="log-panel" class="hidden">
+    <div id="log-header">
+      <span>LOG EVENTI</span>
+      <button id="btn-close-log">✕</button>
+    </div>
+    <div id="log-content"></div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
