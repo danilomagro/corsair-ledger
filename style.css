@@ -664,6 +664,70 @@ body {
 
 .btn-collect:hover { background: #3a6648; }
 
+/* ─── Battle result screen ───────────────────────────────────────────────── */
+.battle-result {
+  border-radius: 4px;
+  border: 2px solid;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.battle-result.victory {
+  background: #e8f4ee;
+  border-color: var(--green);
+}
+
+.battle-result.defeat {
+  background: #f8eaea;
+  border-color: var(--red);
+}
+
+.battle-result-header {
+  font-size: 12px;
+  font-variant: small-caps;
+  letter-spacing: 1px;
+}
+
+.battle-result.victory .battle-result-header { color: #2a5c3a; }
+.battle-result.defeat  .battle-result-header { color: #5a1a1a; }
+
+.battle-result-outcome {
+  font-size: 26px;
+  font-weight: bold;
+  font-variant: small-caps;
+  letter-spacing: 3px;
+}
+
+.battle-result.victory .battle-result-outcome { color: var(--green); }
+.battle-result.defeat  .battle-result-outcome { color: var(--red); }
+
+.battle-result-body {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.btn-battle-continue {
+  align-self: flex-start;
+  margin-top: 6px;
+  background: var(--ink);
+  color: var(--gold);
+  border: 1px solid var(--gold-dk);
+  padding: 7px 22px;
+  border-radius: 2px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: Georgia, serif;
+  font-variant: small-caps;
+  letter-spacing: 1px;
+  transition: background 0.15s;
+}
+
+.btn-battle-continue:hover { background: var(--gold-dk); color: var(--parchment); }
+
 /* ─── SVG map animation ───────────────────────────────────────────────────── */
 .mission-pulse {
   animation: pulseShip 2s ease-in-out infinite;

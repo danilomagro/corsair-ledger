@@ -190,18 +190,21 @@ function launchMission({ routeId, missionId, shipIds, fireBarrelsUsed }) {
   Object.entries(mission.requiredCargo).forEach(([t, a]) => { state.player.cargo[t] -= a; });
   state.player.fireBarrels -= (fireBarrelsUsed || 0);
 
+  let battleResult = null; // populated only if a battle was fought
+
   if (routeState.dangerLevel > 0) {
     const won = Math.random() < calculateOdds(shipIds, routeId, fireBarrelsUsed);
     if (won) {
-      if (routeState.dangerLevel > 0) routeState.dangerLevel -= 1;
-      addLog(`⚔ Battaglia vinta su ${routeData.label}! Pericolo → ${DANGER_LABEL[routeState.dangerLevel]}.`);
+      routeState.dangerLevel -= 1;
+      battleResult = { outcome: 'victory', routeLabel: routeData.label, newDangerLabel: DANGER_LABEL[routeState.dangerLevel] };
+      addLog(`⚔ Battaglia vinta su ${routeData.label}! Pericolo → ${battleResult.newDangerLabel}.`);
     } else {
       const victimId = shipIds[Math.floor(Math.random() * shipIds.length)];
       const victim   = state.fleet.find(s => s.id === victimId);
       victim.status  = 'damaged';
       addLog(`⚔ Battaglia persa su ${routeData.label}. ${victim.name} è danneggiata!`);
       saveState();
-      return { success: false };
+      return { success: false, battle: { outcome: 'defeat', routeLabel: routeData.label, damagedShip: victim.name } };
     }
   }
 
@@ -217,7 +220,7 @@ function launchMission({ routeId, missionId, shipIds, fireBarrelsUsed }) {
 
   addLog(`⛵ ${mission.name} avviata su ${routeData.label} (${minutes} min).`);
   saveState();
-  return { success: true, minutes };
+  return { success: true, minutes, battle: battleResult };
 }
 
 function collectMission(activeMissionId) {
@@ -298,6 +301,7 @@ let selectedRouteId   = null;
 let selectedMissionId = null;
 let selectedShipIds   = new Set();
 let fireBarrelsUsed   = 0;
+let lastBattleResult  = null; // { outcome, routeLabel, damagedShip?, newDangerLabel? }
 
 function setSelectedRoute(routeId) {
   selectedRouteId   = routeId;
@@ -503,6 +507,7 @@ function renderFleet() {
 function renderPanel() {
   const container = document.getElementById('detail-content');
   if (!container) return;
+  if (lastBattleResult) { renderBattleResult(container, lastBattleResult); return; }
   if (!selectedRouteId) { renderActiveMissionsPanel(container); return; }
   const route      = ROUTES[selectedRouteId];
   const routeState = state.routes[selectedRouteId];
@@ -647,7 +652,38 @@ function renderMissionDetail(container, route, dl, color, dlabel) {
   container.querySelector('.btn-launch')?.addEventListener('click', () => {
     if (!selArr.length) return;
     const result = launchMission({ routeId: selectedRouteId, missionId: selectedMissionId, shipIds: [...selectedShipIds], fireBarrelsUsed });
-    if (result.success) setSelectedRoute(selectedRouteId);
+    if (result.battle) {
+      lastBattleResult = result.battle;
+      // On defeat keep selectedRoute so the "Continua" button can return to it;
+      // on victory same — user sees the result, then goes back to route overview.
+      if (result.success) setSelectedRoute(selectedRouteId);
+    } else if (result.success) {
+      setSelectedRoute(selectedRouteId);
+    }
+    renderAll();
+  });
+}
+
+function renderBattleResult(container, battle) {
+  const isVictory = battle.outcome === 'victory';
+  container.innerHTML = `
+    <div class="battle-result ${isVictory ? 'victory' : 'defeat'}">
+      <div class="battle-result-header">
+        <span class="battle-route">⚔ Battaglia — ${battle.routeLabel}</span>
+      </div>
+      <div class="battle-result-outcome">
+        ${isVictory ? '⚔ VITTORIA' : '💀 SCONFITTA'}
+      </div>
+      <div class="battle-result-body">
+        ${isVictory
+          ? `Nemici respinti. Pericolo ridotto a <strong>${battle.newDangerLabel}</strong>.<br>La missione è partita.`
+          : `<strong>${battle.damagedShip}</strong> è stata colpita nel combattimento.<br>La flotta si ritira in porto.`
+        }
+      </div>
+      <button class="btn-battle-continue">Continua</button>
+    </div>`;
+  container.querySelector('.btn-battle-continue').addEventListener('click', () => {
+    lastBattleResult = null;
     renderAll();
   });
 }
