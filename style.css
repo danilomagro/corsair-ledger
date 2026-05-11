@@ -50,7 +50,8 @@ body {
   flex: 0 0 52%;
   overflow: hidden;
   border-bottom: 2px solid var(--border);
-  background: var(--sea);
+  /* fallback colour for any letterboxing — matches the antique map border tone */
+  background: #6b5020;
 }
 
 #map-container {
