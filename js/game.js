@@ -5,16 +5,24 @@
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
 const PORTS = {
-  nassau:     { id: 'nassau',     name: 'Nassau',     x: 378, y: 88,  desc: 'Cuore dei Caraibi — porto libero' },
-  havana:     { id: 'havana',     name: 'Havana',     x: 228, y: 182, desc: 'Fortezza spagnola di Cuba' },
-  tortuga:    { id: 'tortuga',    name: 'Tortuga',    x: 508, y: 168, desc: 'Covo dei corsari di Hispaniola' },
-  port_royal: { id: 'port_royal', name: 'Port Royal', x: 390, y: 256, desc: 'Porto britannico della Giamaica' },
+  // ── Caraibi ──
+  nassau:     { id: 'nassau',     name: 'Nassau',     x: 248, y: 130, desc: 'Cuore dei Caraibi — porto libero' },
+  havana:     { id: 'havana',     name: 'Havana',     x: 152, y: 200, desc: 'Fortezza spagnola di Cuba' },
+  tortuga:    { id: 'tortuga',    name: 'Tortuga',    x: 348, y: 182, desc: 'Covo dei corsari di Hispaniola' },
+  port_royal: { id: 'port_royal', name: 'Port Royal', x: 265, y: 258, desc: 'Porto britannico della Giamaica' },
+  // ── Costa Americana ──
+  charleston: { id: 'charleston', name: 'Charleston', x: 198, y: 72,  desc: 'Porto coloniale della Carolina del Sud' },
+  boston:     { id: 'boston',     name: 'Boston',     x: 178, y: 28,  desc: 'Capitale del commercio del New England' },
+  // ── Africa Occidentale ──
+  dakar:      { id: 'dakar',      name: 'Dakar',      x: 642, y: 222, desc: 'Porto senegalese sull\'Atlantico' },
+  cape_verde: { id: 'cape_verde', name: 'Capo Verde', x: 548, y: 168, desc: 'Isole atlantiche — crocevia dei mari' },
 };
 
 const DANGER_COLOR = { 0: '#4a7c59', 1: '#b89a2a', 2: '#c87428', 3: '#8b2020' };
 const DANGER_LABEL = { 0: 'Verde', 1: 'Giallo', 2: 'Arancione', 3: 'Rosso' };
 
 const ROUTES = {
+  // ── Caraibi (Zona 1) ────────────────────────────────────────────────────
   nassau_havana: {
     id: 'nassau_havana', label: 'Nassau – Havana', ports: ['nassau', 'havana'],
     baseDanger: 0, enemyStrength: 8,
@@ -50,30 +58,119 @@ const ROUTES = {
   havana_port_royal: {
     id: 'havana_port_royal', label: 'Havana – Port Royal', ports: ['havana', 'port_royal'],
     baseDanger: 2, enemyStrength: 28,
+    captureChance: 0.20, captureShipType: 'brig',
     missions: [
       { id: 'm_hp_1', name: 'Crown Jewels',  requiredCargo: { wine: 5, cocoa: 3 }, reward: { reales: 800, gemmes: 5, fireBarrels: 1 }, baseMinutes: 20 },
       { id: 'm_hp_2', name: 'Trade Convoy',  requiredCargo: { tobacco: 10 },       reward: { reales: 650, gemmes: 4 },                 baseMinutes: 22 },
     ],
   },
+  // ── Costa Americana (Zona 2) ─────────────────────────────────────────────
+  nassau_charleston: {
+    id: 'nassau_charleston', label: 'Nassau – Charleston', ports: ['nassau', 'charleston'],
+    baseDanger: 1, enemyStrength: 22,
+    captureChance: 0.18, captureShipType: 'schooner',
+    missions: [
+      { id: 'm_nc_1', name: 'Cotton Run',       requiredCargo: {},               reward: { reales: 380, cargo: { cocoa: 4 } }, baseMinutes: 10 },
+      { id: 'm_nc_2', name: 'Colonial Trade',   requiredCargo: { wine: 4 },      reward: { reales: 520, gemmes: 3 },           baseMinutes: 12 },
+    ],
+  },
+  port_royal_charleston: {
+    id: 'port_royal_charleston', label: 'Port Royal – Charleston', ports: ['port_royal', 'charleston'],
+    baseDanger: 2, enemyStrength: 30,
+    captureChance: 0.25, captureShipType: 'brig',
+    missions: [
+      { id: 'm_pc_1', name: 'Sugar Convoy',   requiredCargo: {},                  reward: { reales: 580, gemmes: 3 },           baseMinutes: 14 },
+      { id: 'm_pc_2', name: 'Smuggler\'s Run', requiredCargo: { tobacco: 8 },     reward: { reales: 740, gemmes: 5 },           baseMinutes: 16 },
+    ],
+  },
+  charleston_boston: {
+    id: 'charleston_boston', label: 'Charleston – Boston', ports: ['charleston', 'boston'],
+    baseDanger: 1, enemyStrength: 20,
+    captureChance: 0.20, captureShipType: 'schooner',
+    missions: [
+      { id: 'm_cb_1', name: 'New England Cargo',   requiredCargo: { cocoa: 4 }, reward: { reales: 480, cargo: { wine: 6 } }, baseMinutes: 12 },
+      { id: 'm_cb_2', name: 'Colonial Supplies',   requiredCargo: {},            reward: { reales: 600, gemmes: 3 },          baseMinutes: 14 },
+    ],
+  },
+  // ── Traversata Atlantica (Zona 3) ────────────────────────────────────────
+  charleston_dakar: {
+    id: 'charleston_dakar', label: 'Charleston – Dakar', ports: ['charleston', 'dakar'],
+    baseDanger: 3, enemyStrength: 58,
+    captureChance: 0.35, captureShipType: 'man_o_war',
+    missions: [
+      { id: 'm_cd_1', name: 'Traversata Atlantica', requiredCargo: {},                          reward: { reales: 1800, gemmes: 10, fireBarrels: 2 }, baseMinutes: 30 },
+      { id: 'm_cd_2', name: 'Carico Prezioso',       requiredCargo: { wine: 8, tobacco: 6 },    reward: { reales: 2400, gemmes: 15 },                 baseMinutes: 35 },
+    ],
+  },
+  port_royal_dakar: {
+    id: 'port_royal_dakar', label: 'Port Royal – Dakar', ports: ['port_royal', 'dakar'],
+    baseDanger: 3, enemyStrength: 50,
+    captureChance: 0.30, captureShipType: 'frigate',
+    missions: [
+      { id: 'm_pd_1', name: 'Rotta del Triangolo', requiredCargo: { tobacco: 10 }, reward: { reales: 1600, gemmes: 8 },                  baseMinutes: 28 },
+      { id: 'm_pd_2', name: 'Oro Nero',             requiredCargo: {},              reward: { reales: 2000, gemmes: 12, fireBarrels: 1 }, baseMinutes: 32 },
+    ],
+  },
+  // ── Africa Occidentale (Zona 4) ──────────────────────────────────────────
+  dakar_cape_verde: {
+    id: 'dakar_cape_verde', label: 'Dakar – Capo Verde', ports: ['dakar', 'cape_verde'],
+    baseDanger: 2, enemyStrength: 36,
+    captureChance: 0.25, captureShipType: 'frigate',
+    missions: [
+      { id: 'm_dc_1', name: 'Spezie Africane', requiredCargo: {},              reward: { reales: 900,  gemmes: 5 },                  baseMinutes: 18 },
+      { id: 'm_dc_2', name: 'Rotta delle Isole', requiredCargo: { wine: 6 },  reward: { reales: 1100, gemmes: 7, fireBarrels: 1 },  baseMinutes: 20 },
+    ],
+  },
+  cape_verde_nassau: {
+    id: 'cape_verde_nassau', label: 'Capo Verde – Nassau', ports: ['cape_verde', 'nassau'],
+    baseDanger: 2, enemyStrength: 32,
+    captureChance: 0.22, captureShipType: 'brig',
+    missions: [
+      { id: 'm_cn_1', name: 'Ritorno ai Caraibi',    requiredCargo: {},              reward: { reales: 1200, gemmes: 6, fireBarrels: 1 }, baseMinutes: 22 },
+      { id: 'm_cn_2', name: 'Circolo Triangolare',   requiredCargo: { cocoa: 8 },    reward: { reales: 1500, gemmes: 10 },                baseMinutes: 25 },
+    ],
+  },
 };
 
 const SHIP_TYPES = {
-  gunboat:  { name: 'Gunboat',  cargo: 10, firepower: 6,  hull: 8,  speed: 15, repairCost: 3 },
-  schooner: { name: 'Schooner', cargo: 20, firepower: 8,  hull: 15, speed: 12, repairCost: 5 },
-  brig:     { name: 'Brig',     cargo: 35, firepower: 14, hull: 22, speed: 9,  repairCost: 8 },
+  gunboat:   { name: 'Gunboat',   cargo: 10, firepower: 6,  hull: 8,  speed: 15, repairCost: 3  },
+  schooner:  { name: 'Schooner',  cargo: 20, firepower: 8,  hull: 15, speed: 12, repairCost: 5  },
+  brig:      { name: 'Brig',      cargo: 35, firepower: 14, hull: 22, speed: 9,  repairCost: 8  },
+  frigate:   { name: 'Fregata',   cargo: 45, firepower: 22, hull: 35, speed: 7,  repairCost: 12 },
+  man_o_war: { name: "Man O' War", cargo: 60, firepower: 35, hull: 50, speed: 5, repairCost: 20 },
 };
 
 const CARGO_LABELS = { tobacco: 'Tabacco', wine: 'Vino', cocoa: 'Cacao' };
 
+// Nomi per navi nemiche catturate in battaglia
+const CAPTURED_NAMES = [
+  'Tigre del Mare', 'Vento di Ferro', 'La Vendetta', 'Il Predatore',
+  'Stella del Nord', 'San Felipe', 'Aquila Nera', 'Spirito Libero',
+  'Il Corsaro', 'Bocca di Fuoco', 'La Tempesta', 'Grifone Ardente',
+  'Santo Domingo', 'Dente di Squalo', 'La Fortuna', 'Cuore di Ferro',
+];
+
 // Route unlock prerequisites: complete N missions on the required route to unlock.
 const UNLOCK_CONDITIONS = {
-  havana_tortuga:     { prereq: 'nassau_havana',  needed: 3 },
-  tortuga_port_royal: { prereq: 'nassau_tortuga', needed: 3 },
-  havana_port_royal:  { prereq: 'havana_tortuga', needed: 3 },
+  // Caraibi → Caraibi
+  havana_tortuga:        { prereq: 'nassau_havana',        needed: 3 },
+  tortuga_port_royal:    { prereq: 'nassau_tortuga',       needed: 3 },
+  havana_port_royal:     { prereq: 'havana_tortuga',       needed: 3 },
+  // Caraibi → Costa Americana
+  nassau_charleston:     { prereq: 'havana_port_royal',    needed: 2 },
+  port_royal_charleston: { prereq: 'tortuga_port_royal',   needed: 4 },
+  // Costa Americana → nord
+  charleston_boston:     { prereq: 'nassau_charleston',    needed: 3 },
+  // Traversata Atlantica
+  charleston_dakar:      { prereq: 'charleston_boston',    needed: 3 },
+  port_royal_dakar:      { prereq: 'port_royal_charleston', needed: 3 },
+  // Africa Occidentale
+  dakar_cape_verde:      { prereq: 'charleston_dakar',     needed: 1 },
+  cape_verde_nassau:     { prereq: 'dakar_cape_verde',     needed: 3 },
 };
 
 const INITIAL_STATE = {
-  version: '1.1',
+  version: '2.0',
   player: { reales: 500, gemmes: 20, cargo: { tobacco: 5, wine: 5, cocoa: 3 }, fireBarrels: 1 },
   fleet: [
     { id: 'ship_001', name: 'La Speranza',  type: 'schooner', status: 'docked', damage: 0 },
@@ -81,15 +178,22 @@ const INITIAL_STATE = {
     { id: 'ship_003', name: 'San Cristóbal', type: 'gunboat',  status: 'docked', damage: 0 },
   ],
   routes: {
-    nassau_havana:      { dangerLevel: 0, unlocked: true,  missionsCompleted: 0 },
-    nassau_tortuga:     { dangerLevel: 0, unlocked: true,  missionsCompleted: 0 },
-    havana_tortuga:     { dangerLevel: 1, unlocked: false, missionsCompleted: 0 },
-    tortuga_port_royal: { dangerLevel: 1, unlocked: false, missionsCompleted: 0 },
-    havana_port_royal:  { dangerLevel: 2, unlocked: false, missionsCompleted: 0 },
+    nassau_havana:         { dangerLevel: 0, unlocked: true,  missionsCompleted: 0 },
+    nassau_tortuga:        { dangerLevel: 0, unlocked: true,  missionsCompleted: 0 },
+    havana_tortuga:        { dangerLevel: 1, unlocked: false, missionsCompleted: 0 },
+    tortuga_port_royal:    { dangerLevel: 1, unlocked: false, missionsCompleted: 0 },
+    havana_port_royal:     { dangerLevel: 2, unlocked: false, missionsCompleted: 0 },
+    nassau_charleston:     { dangerLevel: 1, unlocked: false, missionsCompleted: 0 },
+    port_royal_charleston: { dangerLevel: 2, unlocked: false, missionsCompleted: 0 },
+    charleston_boston:     { dangerLevel: 1, unlocked: false, missionsCompleted: 0 },
+    charleston_dakar:      { dangerLevel: 3, unlocked: false, missionsCompleted: 0 },
+    port_royal_dakar:      { dangerLevel: 3, unlocked: false, missionsCompleted: 0 },
+    dakar_cape_verde:      { dangerLevel: 2, unlocked: false, missionsCompleted: 0 },
+    cape_verde_nassau:     { dangerLevel: 2, unlocked: false, missionsCompleted: 0 },
   },
   activeMissions: [],
-  unlockedPorts: ['nassau', 'havana', 'tortuga', 'port_royal'],
-  dockSlots: 5,
+  unlockedPorts: ['nassau', 'havana', 'tortuga', 'port_royal', 'charleston', 'boston', 'dakar', 'cape_verde'],
+  dockSlots: 10,
   eventLog: ['Benvenuto, Capitano. La flotta è in attesa dei tuoi ordini.'],
 };
 
@@ -110,10 +214,25 @@ function loadState() {
 
 // Forward-migrate older saves to add new fields without losing progress.
 function migrateSave() {
-  Object.keys(state.routes).forEach(id => {
+  // Ensure all known routes exist in the save (handles v1 → v2 expansion)
+  Object.keys(ROUTES).forEach(id => {
+    if (!state.routes[id]) {
+      const cond = UNLOCK_CONDITIONS[id];
+      state.routes[id] = {
+        dangerLevel: ROUTES[id].baseDanger,
+        unlocked: !cond,
+        missionsCompleted: 0,
+      };
+    }
     if (state.routes[id].missionsCompleted === undefined)
       state.routes[id].missionsCompleted = 0;
   });
+  // Ensure all ports are visible
+  Object.keys(PORTS).forEach(id => {
+    if (!state.unlockedPorts.includes(id)) state.unlockedPorts.push(id);
+  });
+  // Bump dock slots for old saves
+  if (!state.dockSlots || state.dockSlots < 10) state.dockSlots = 10;
 }
 
 function saveState() {
@@ -256,6 +375,26 @@ function collectMission(activeMissionId) {
   if (rs) rs.missionsCompleted = (rs.missionsCompleted || 0) + 1;
   checkRouteUnlocks();
 
+  // Ship capture: chance to seize an enemy vessel after a successful mission
+  const routeData = ROUTES[am.routeId];
+  if (routeData.captureChance && routeData.captureShipType
+      && Math.random() < routeData.captureChance) {
+    if (state.fleet.length < state.dockSlots) {
+      const captured = {
+        id: `ship_${Date.now()}`,
+        name: CAPTURED_NAMES[Math.floor(Math.random() * CAPTURED_NAMES.length)],
+        type: routeData.captureShipType,
+        status: 'docked',
+        damage: 0,
+      };
+      state.fleet.push(captured);
+      lastCaptureResult = { shipName: captured.name, shipType: SHIP_TYPES[captured.type].name };
+      addLog(`⚓ Nave nemica catturata: ${captured.name} (${SHIP_TYPES[captured.type].name})!`);
+    } else {
+      addLog(`⚓ Nave nemica sconfitta, ma i moli sono pieni — impossibile portarla in porto.`);
+    }
+  }
+
   addLog(`✅ ${am.missionName} completata! Bottino: ${parts}`);
   saveState();
 }
@@ -301,7 +440,8 @@ let selectedRouteId   = null;
 let selectedMissionId = null;
 let selectedShipIds   = new Set();
 let fireBarrelsUsed   = 0;
-let lastBattleResult  = null; // { outcome, routeLabel, damagedShip?, newDangerLabel? }
+let lastBattleResult  = null;  // { outcome, routeLabel, damagedShip?, newDangerLabel? }
+let lastCaptureResult = null;  // { shipName, shipType } — set by collectMission
 
 function setSelectedRoute(routeId) {
   selectedRouteId   = routeId;
@@ -313,6 +453,7 @@ function setSelectedRoute(routeId) {
 function clearSelection() {
   selectedRouteId = null; selectedMissionId = null;
   selectedShipIds.clear(); fireBarrelsUsed = 0;
+  lastCaptureResult = null;
 }
 
 function renderAll() {
@@ -351,98 +492,105 @@ function renderMap() {
 
   // ── Defs ──────────────────────────────────────────────────────────────────
   const defs = svgEl('defs');
-
-  // Sea gradient (aged, desaturated blue)
   const seaGrad = svgEl('linearGradient');
-  svgAttr(seaGrad, { id: 'sea-grad', x1: '10%', y1: '0%', x2: '90%', y2: '100%' });
-  [['0%','#c0d2de'],['50%','#aec4d0'],['100%','#9ab4c4']].forEach(([off,clr]) => {
+  svgAttr(seaGrad, { id: 'sea-grad', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
+  [['0%','#bdd0de'],['50%','#aabece'],['100%','#96aebe']].forEach(([off,clr]) => {
     const s = svgEl('stop'); svgAttr(s, { offset: off, 'stop-color': clr }); seaGrad.appendChild(s);
   });
   defs.appendChild(seaGrad);
-
-  // Wave hatching pattern
   const wavePat = svgEl('pattern');
-  svgAttr(wavePat, { id: 'wave-pat', x: 0, y: 0, width: 48, height: 18,
-    patternUnits: 'userSpaceOnUse' });
+  svgAttr(wavePat, { id: 'wave-pat', x: 0, y: 0, width: 48, height: 18, patternUnits: 'userSpaceOnUse' });
   const wp = svgEl('path');
   svgAttr(wp, { d: 'M0,9 Q6,4 12,9 Q18,14 24,9 Q30,4 36,9 Q42,14 48,9',
-    stroke: '#6a90a8', 'stroke-width': 0.55, fill: 'none' });
+    stroke: '#6585a0', 'stroke-width': 0.55, fill: 'none' });
   wavePat.appendChild(wp);
   defs.appendChild(wavePat);
-
   svg.appendChild(defs);
 
   // ── Sea background ────────────────────────────────────────────────────────
-  const bg = svgEl('rect');
-  svgAttr(bg, { width: 760, height: 310, fill: 'url(#sea-grad)' });
-  svg.appendChild(bg);
-
-  // Wave overlay
-  const waveRect = svgEl('rect');
-  svgAttr(waveRect, { width: 760, height: 310, fill: 'url(#wave-pat)', opacity: 0.45 });
-  svg.appendChild(waveRect);
+  const bg = svgEl('rect'); svgAttr(bg, { width: 760, height: 310, fill: 'url(#sea-grad)' }); svg.appendChild(bg);
+  const waveRect = svgEl('rect'); svgAttr(waveRect, { width: 760, height: 310, fill: 'url(#wave-pat)', opacity: 0.42 }); svg.appendChild(waveRect);
 
   // ── Cartographic double-line border ──────────────────────────────────────
-  const fr1 = svgEl('rect');
-  svgAttr(fr1, { x: 4, y: 4, width: 752, height: 302, fill: 'none',
-    stroke: '#30505e', 'stroke-width': 2.5, opacity: 0.45 });
-  svg.appendChild(fr1);
-  const fr2 = svgEl('rect');
-  svgAttr(fr2, { x: 9, y: 9, width: 742, height: 292, fill: 'none',
-    stroke: '#30505e', 'stroke-width': 0.8, opacity: 0.25 });
-  svg.appendChild(fr2);
+  const fr1 = svgEl('rect'); svgAttr(fr1, { x: 4, y: 4, width: 752, height: 302, fill: 'none', stroke: '#2a4858', 'stroke-width': 2.5, opacity: 0.45 }); svg.appendChild(fr1);
+  const fr2 = svgEl('rect'); svgAttr(fr2, { x: 9, y: 9, width: 742, height: 292, fill: 'none', stroke: '#2a4858', 'stroke-width': 0.8, opacity: 0.25 }); svg.appendChild(fr2);
 
-  // ── Navigation grid (latitude / longitude lines) ──────────────────────────
-  for (let x = 76; x < 760; x += 76) svgLine(svg, x, 0, x, 310, '#305870', 0.15);
-  for (let y = 62; y < 310; y += 62) svgLine(svg, 0, y, 760, y, '#305870', 0.15);
+  // ── Navigation grid ──────────────────────────────────────────────────────
+  for (let x = 76; x < 760; x += 76) svgLine(svg, x, 0, x, 310, '#2a4858', 0.14);
+  for (let y = 62; y < 310; y += 62) svgLine(svg, 0, y, 760, y, '#2a4858', 0.14);
 
-  // ── Land masses (SVG paths — stylised 1700s cartography) ──────────────────
+  // ── Land masses ────────────────────────────────────────────────────────────
   const lf = '#c8b068', ls = '#7a5c18';
 
-  // Cuba — large elongated island (Havana at 228,182)
+  // American eastern seaboard — coastal strip left side
+  const americas = svgEl('path');
+  svgAttr(americas, {
+    d: 'M0,0 L132,0 C140,14 158,22 174,28 C182,38 190,54 196,70 C204,92 210,120 214,152 C217,178 218,198 212,218 C205,238 192,250 178,264 C162,280 148,292 138,310 L0,310 Z',
+    fill: lf, stroke: ls, 'stroke-width': 1.2, opacity: 0.88,
+  });
+  svg.appendChild(americas);
+
+  // African coastline — right side strip
+  const africa = svgEl('path');
+  svgAttr(africa, {
+    d: 'M760,0 L712,0 C708,22 706,50 704,80 C702,112 700,144 698,172 C696,200 693,222 690,245 C686,268 680,285 672,295 L760,295 Z',
+    fill: lf, stroke: ls, 'stroke-width': 1.2, opacity: 0.88,
+  });
+  svg.appendChild(africa);
+
+  // Cuba — elongated (Havana at 152,200)
   const cuba = svgEl('path');
   svgAttr(cuba, {
-    d: 'M118,180 C138,170 162,168 186,170 C206,171 224,174 244,176 C264,178 284,177 304,182 C318,187 320,194 308,198 C290,203 266,201 242,198 C218,195 194,191 170,188 C148,186 126,188 114,185 Z',
+    d: 'M94,198 C110,190 130,188 150,190 C165,191 178,194 198,196 C215,197 232,196 248,200 C258,204 260,212 250,216 C232,221 210,218 188,215 C165,212 142,210 120,208 C104,207 90,204 88,200 Z',
     fill: lf, stroke: ls, 'stroke-width': 1.2, opacity: 0.90,
   });
   svg.appendChild(cuba);
 
-  // Hispaniola — near Tortuga (508,168)
+  // Hispaniola — near Tortuga (348,182)
   const hisp = svgEl('path');
   svgAttr(hisp, {
-    d: 'M452,178 C465,170 482,168 500,169 C518,168 536,172 551,179 C558,187 551,197 534,200 C516,202 496,200 478,196 C462,192 448,190 446,185 Z',
+    d: 'M312,192 C322,184 336,182 352,183 C366,182 380,185 392,192 C398,198 394,208 380,212 C364,214 346,212 330,208 C316,205 306,200 308,194 Z',
     fill: lf, stroke: ls, 'stroke-width': 1.2, opacity: 0.90,
   });
   svg.appendChild(hisp);
 
-  // Jamaica — Port Royal at (390,256)
+  // Jamaica — Port Royal at (265,258)
   const jamaica = svgEl('path');
   svgAttr(jamaica, {
-    d: 'M358,254 C368,248 381,246 395,248 C407,247 417,252 422,259 C415,268 400,270 386,268 C372,266 360,262 354,258 Z',
+    d: 'M244,256 C252,250 262,248 274,250 C284,249 292,253 296,260 C290,268 276,270 262,268 C250,267 240,263 238,258 Z',
     fill: lf, stroke: ls, 'stroke-width': 1.2, opacity: 0.90,
   });
   svg.appendChild(jamaica);
 
-  // New Providence / Bahamas — Nassau at (378,88)
+  // New Providence / Bahamas — Nassau at (248,130)
   const nassauIsle = svgEl('path');
   svgAttr(nassauIsle, {
-    d: 'M364,88 C371,82 382,80 394,82 C404,81 411,86 412,93 C404,99 392,99 380,97 C368,96 360,93 358,89 Z',
+    d: 'M236,130 C242,124 252,122 262,124 C270,123 276,128 276,134 C268,140 256,140 244,138 C234,137 230,133 232,130 Z',
     fill: lf, stroke: ls, 'stroke-width': 1.2, opacity: 0.86,
   });
   svg.appendChild(nassauIsle);
 
-  // Scatter of small cays and islets for atmosphere
+  // Cape Verde islands (548,168)
   [
-    'M330,118 Q337,114 343,116 Q347,119 344,123 Q337,124 331,121 Z',
-    'M447,134 Q453,130 458,132 Q461,136 457,139 Q450,140 446,137 Z',
-    'M568,197 Q574,193 580,195 Q583,199 578,202 Q571,202 566,199 Z',
-    'M617,138 Q622,135 626,137 Q628,141 624,143 Q618,143 615,140 Z',
-    'M160,237 Q165,233 169,235 Q171,238 167,241 Q161,241 158,238 Z',
-    'M597,249 Q601,246 605,248 Q607,251 603,253 Q598,253 595,250 Z',
-    'M680,190 Q684,187 688,189 Q689,192 686,194 Q681,194 679,191 Z',
+    'M541,162 Q547,158 553,160 Q556,164 551,168 Q544,169 540,165 Z',
+    'M554,170 Q558,167 562,169 Q565,173 561,176 Q555,176 552,172 Z',
+    'M537,172 Q540,169 544,171 Q546,175 542,177 Q537,176 535,173 Z',
   ].forEach(d => {
     const isle = svgEl('path');
-    svgAttr(isle, { d, fill: lf, stroke: ls, 'stroke-width': 0.8, opacity: 0.62 });
+    svgAttr(isle, { d, fill: lf, stroke: ls, 'stroke-width': 0.9, opacity: 0.85 });
+    svg.appendChild(isle);
+  });
+
+  // Small scattered cays
+  [
+    'M270,158 Q275,155 279,157 Q281,160 277,163 Q271,163 268,160 Z',
+    'M360,140 Q364,137 368,139 Q370,142 366,145 Q360,145 358,142 Z',
+    'M420,212 Q424,209 428,211 Q430,214 426,217 Q420,217 418,214 Z',
+    'M480,230 Q484,227 488,229 Q490,233 486,235 Q480,235 478,232 Z',
+    'M460,155 Q463,152 467,154 Q469,157 465,160 Q459,160 457,157 Z',
+  ].forEach(d => {
+    const isle = svgEl('path');
+    svgAttr(isle, { d, fill: lf, stroke: ls, 'stroke-width': 0.7, opacity: 0.60 });
     svg.appendChild(isle);
   });
 
@@ -460,11 +608,11 @@ function renderMap() {
       const needed = cond?.needed || 3;
       const lockedLine = svgEl('line');
       svgAttr(lockedLine, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
-        stroke: '#607888', 'stroke-width': 1.2, 'stroke-dasharray': '3,10', opacity: 0.28 });
+        stroke: '#506878', 'stroke-width': 1.1, 'stroke-dasharray': '3,11', opacity: 0.26 });
       svg.appendChild(lockedLine);
       svgText(svg, `⚿ ${done}/${needed}`, mx, my + 4, {
-        'text-anchor': 'middle', 'font-size': 10, fill: '#3a4a55',
-        'font-family': 'Georgia, serif', 'font-style': 'italic', opacity: 0.55,
+        'text-anchor': 'middle', 'font-size': 9.5, fill: '#38485a',
+        'font-family': 'Georgia, serif', 'font-style': 'italic', opacity: 0.52,
       });
       return;
     }
@@ -475,15 +623,13 @@ function renderMap() {
     const active = state.activeMissions.some(m => m.routeId === route.id);
     const ready  = state.activeMissions.find(m => m.routeId === route.id && m.completesAt <= now);
 
-    // Nautical dotted line (classic chart style)
     const line = svgEl('line');
     svgAttr(line, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
       stroke: color, 'stroke-width': isSel ? 3.5 : 2.2,
       'stroke-dasharray': isSel ? '3,6' : '2,9',
-      'stroke-linecap': 'round', opacity: isSel ? 1.0 : 0.68 });
+      'stroke-linecap': 'round', opacity: isSel ? 1.0 : 0.70 });
     svg.appendChild(line);
 
-    // Invisible hit zone
     const hit = svgEl('line');
     svgAttr(hit, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
       stroke: 'transparent', 'stroke-width': 24,
@@ -497,7 +643,6 @@ function renderMap() {
       svg.appendChild(pulse);
       svgText(svg, '⛵', mx, my + 5, { 'text-anchor': 'middle', 'font-size': 11 });
     }
-
     if (ready) {
       svgText(svg, '✓ PRONTA', mx, my - (active ? 18 : 6), {
         'text-anchor': 'middle', 'font-size': 9.5, fill: '#3a6a48',
@@ -509,49 +654,34 @@ function renderMap() {
   // ── Port markers ──────────────────────────────────────────────────────────
   Object.values(PORTS).forEach(port => {
     if (!state.unlockedPorts.includes(port.id)) return;
-    // Outer decorative ring
     const ring = svgEl('circle');
-    svgAttr(ring, { cx: port.x, cy: port.y, r: 14, fill: 'none',
-      stroke: '#2c1810', 'stroke-width': 0.8, opacity: 0.30 });
+    svgAttr(ring, { cx: port.x, cy: port.y, r: 13, fill: 'none',
+      stroke: '#2c1810', 'stroke-width': 0.8, opacity: 0.28 });
     svg.appendChild(ring);
-    // Filled inner circle
     const c = svgEl('circle');
-    svgAttr(c, { cx: port.x, cy: port.y, r: 9, fill: '#f0e8c4',
+    svgAttr(c, { cx: port.x, cy: port.y, r: 8, fill: '#f0e8c4',
       stroke: '#2c1810', 'stroke-width': 1.8 });
     svg.appendChild(c);
-    svgText(svg, '⚓', port.x, port.y + 4.5, { 'text-anchor': 'middle', 'font-size': 9 });
-    svgText(svg, port.name.toUpperCase(), port.x, port.y + 27, {
-      'text-anchor': 'middle', 'font-size': 9.5, fill: '#1a0e08',
-      'font-weight': 'bold', 'font-family': 'Georgia, serif', 'letter-spacing': 1.5,
+    svgText(svg, '⚓', port.x, port.y + 4, { 'text-anchor': 'middle', 'font-size': 8.5 });
+    svgText(svg, port.name.toUpperCase(), port.x, port.y + 24, {
+      'text-anchor': 'middle', 'font-size': 9, fill: '#1a0e08',
+      'font-weight': 'bold', 'font-family': 'Georgia, serif', 'letter-spacing': 1.2,
     });
   });
 
-  // ── Compass Rose ──────────────────────────────────────────────────────────
-  const ccx = 706, ccy = 56;
-  // Background fill
-  const cpBg = svgEl('circle');
-  svgAttr(cpBg, { cx: ccx, cy: ccy, r: 30, fill: '#f0e8c4',
-    stroke: '#8b6914', 'stroke-width': 0.8, opacity: 0.82 });
-  svg.appendChild(cpBg);
-  // Outer decorative ring
-  const cpRing = svgEl('circle');
-  svgAttr(cpRing, { cx: ccx, cy: ccy, r: 34, fill: 'none',
-    stroke: '#8b6914', 'stroke-width': 0.8, opacity: 0.42 });
-  svg.appendChild(cpRing);
-  // Inner reference ring
-  const cpMid = svgEl('circle');
-  svgAttr(cpMid, { cx: ccx, cy: ccy, r: 15, fill: 'none',
-    stroke: '#2c1810', 'stroke-width': 0.5, opacity: 0.22 });
-  svg.appendChild(cpMid);
-  // 8-point diamond star
+  // ── Compass Rose (bottom-right to avoid port labels) ──────────────────────
+  const ccx = 706, ccy = 254;
+  const cpBg = svgEl('circle'); svgAttr(cpBg, { cx: ccx, cy: ccy, r: 30, fill: '#f0e8c4', stroke: '#8b6914', 'stroke-width': 0.8, opacity: 0.82 }); svg.appendChild(cpBg);
+  const cpRing = svgEl('circle'); svgAttr(cpRing, { cx: ccx, cy: ccy, r: 34, fill: 'none', stroke: '#8b6914', 'stroke-width': 0.8, opacity: 0.42 }); svg.appendChild(cpRing);
+  const cpMid = svgEl('circle'); svgAttr(cpMid, { cx: ccx, cy: ccy, r: 14, fill: 'none', stroke: '#2c1810', 'stroke-width': 0.5, opacity: 0.22 }); svg.appendChild(cpMid);
   [0, 45, 90, 135, 180, 225, 270, 315].forEach(deg => {
-    const isCard  = deg % 90 === 0;
-    const rad     = (deg - 90) * Math.PI / 180;
-    const perpR   = rad + Math.PI / 2;
-    const tipLen  = isCard ? 26 : 16;
-    const sw      = isCard ? 5.5 : 3.5;
-    const tipX    = ccx + tipLen * Math.cos(rad);
-    const tipY    = ccy + tipLen * Math.sin(rad);
+    const isCard = deg % 90 === 0;
+    const rad    = (deg - 90) * Math.PI / 180;
+    const perpR  = rad + Math.PI / 2;
+    const tipLen = isCard ? 26 : 16;
+    const sw     = isCard ? 5.5 : 3.5;
+    const tipX   = ccx + tipLen * Math.cos(rad);
+    const tipY   = ccy + tipLen * Math.sin(rad);
     const s1x = ccx + sw * Math.cos(perpR), s1y = ccy + sw * Math.sin(perpR);
     const s2x = ccx - sw * Math.cos(perpR), s2y = ccy - sw * Math.sin(perpR);
     const poly = svgEl('polygon');
@@ -562,10 +692,8 @@ function renderMap() {
     });
     svg.appendChild(poly);
   });
-  // Center dot
   const cd1 = svgEl('circle'); svgAttr(cd1, { cx: ccx, cy: ccy, r: 3.5, fill: '#8b6914' }); svg.appendChild(cd1);
   const cd2 = svgEl('circle'); svgAttr(cd2, { cx: ccx, cy: ccy, r: 1.5, fill: '#f0e8c4' }); svg.appendChild(cd2);
-  // Cardinal labels
   [['N', ccx, ccy - 37], ['S', ccx, ccy + 43], ['E', ccx + 41, ccy + 4], ['W', ccx - 38, ccy + 4]].forEach(([lbl, lx, ly]) => {
     svgText(svg, lbl, lx, ly, {
       'text-anchor': 'middle', 'font-size': 9, 'font-weight': 'bold',
@@ -574,16 +702,16 @@ function renderMap() {
     });
   });
 
-  // ── Cartouche (map title box) ─────────────────────────────────────────────
+  // ── Cartouche ─────────────────────────────────────────────────────────────
   const cRect = svgEl('rect');
-  svgAttr(cRect, { x: 14, y: 274, width: 250, height: 26, rx: 2,
+  svgAttr(cRect, { x: 268, y: 274, width: 224, height: 26, rx: 2,
     fill: '#f0e8c4', stroke: '#8b6914', 'stroke-width': 0.8, opacity: 0.82 });
   svg.appendChild(cRect);
-  svgText(svg, 'MARE CARIBAEUM', 139, 284, {
+  svgText(svg, 'OCEANUS ATLANTICUS', 380, 284, {
     'text-anchor': 'middle', 'font-size': 8.5, fill: '#3a2808',
     'font-family': 'Georgia, serif', 'font-style': 'italic', 'letter-spacing': 2.5,
   });
-  svgText(svg, 'Anno Domini MDCCXVIII', 139, 295, {
+  svgText(svg, 'Anno Domini MDCCXVIII', 380, 295, {
     'text-anchor': 'middle', 'font-size': 7.5, fill: '#5a3818',
     'font-family': 'Georgia, serif', 'font-style': 'italic',
   });
@@ -632,8 +760,9 @@ function renderFleet() {
 function renderPanel() {
   const container = document.getElementById('detail-content');
   if (!container) return;
-  if (lastBattleResult) { renderBattleResult(container, lastBattleResult); return; }
-  if (!selectedRouteId) { renderActiveMissionsPanel(container); return; }
+  if (lastBattleResult)  { renderBattleResult(container, lastBattleResult); return; }
+  if (lastCaptureResult) { renderCaptureResult(container, lastCaptureResult); return; }
+  if (!selectedRouteId)  { renderActiveMissionsPanel(container); return; }
   const route      = ROUTES[selectedRouteId];
   const routeState = state.routes[selectedRouteId];
   const dl         = routeState.dangerLevel;
@@ -711,7 +840,10 @@ function renderMissionDetail(container, route, dl, color, dlabel) {
   <div class="mission-req">🧳 ${reqHtml}</div>
   <div class="mission-req">💰 ${rewardStr(mission.reward)}</div>`;
 
-  if (dangerous) html += `<div class="battle-warning">⚔ Rotta pericolosa — si combatte prima di commerciare. Forza nemica: <strong>${route.enemyStrength}</strong></div>`;
+  if (dangerous) {
+    html += `<div class="battle-warning">⚔ Rotta pericolosa — si combatte prima di commerciare. Forza nemica: <strong>${route.enemyStrength}</strong></div>`;
+    if (dl === 3) html += `<div class="battle-warning" style="border-left-color:#8b6914;background:#f8f0e0;color:#4a3010">⚠ Traversata estrema — si raccomandano Fregata o Man O'War. Possibile cattura di nave nemica.</div>`;
+  }
 
   html += `<h4 class="ship-select-title">Seleziona le navi:</h4>`;
   if (!available.length) {
@@ -809,6 +941,24 @@ function renderBattleResult(container, battle) {
     </div>`;
   container.querySelector('.btn-battle-continue').addEventListener('click', () => {
     lastBattleResult = null;
+    renderAll();
+  });
+}
+
+function renderCaptureResult(container, capture) {
+  container.innerHTML = `
+    <div class="battle-result victory">
+      <div class="battle-result-header">⚓ Nave Catturata</div>
+      <div class="battle-result-outcome">⚓ PREDA!</div>
+      <div class="battle-result-body">
+        Una nave nemica si è arresa durante la missione.<br>
+        <strong>${capture.shipName}</strong> (${capture.shipType}) ora batte la tua bandiera e<br>
+        è ancorata al porto in attesa di ordini.
+      </div>
+      <button class="btn-battle-continue">Alla flotta</button>
+    </div>`;
+  container.querySelector('.btn-battle-continue').addEventListener('click', () => {
+    lastCaptureResult = null;
     renderAll();
   });
 }
