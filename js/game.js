@@ -349,27 +349,104 @@ function renderMap() {
   const svg       = svgEl('svg');
   svgAttr(svg, { viewBox: '0 0 760 310', id: 'map-svg', preserveAspectRatio: 'xMidYMid meet' });
 
-  // Sea background
+  // ── Defs ──────────────────────────────────────────────────────────────────
+  const defs = svgEl('defs');
+
+  // Sea gradient (aged, desaturated blue)
+  const seaGrad = svgEl('linearGradient');
+  svgAttr(seaGrad, { id: 'sea-grad', x1: '10%', y1: '0%', x2: '90%', y2: '100%' });
+  [['0%','#c0d2de'],['50%','#aec4d0'],['100%','#9ab4c4']].forEach(([off,clr]) => {
+    const s = svgEl('stop'); svgAttr(s, { offset: off, 'stop-color': clr }); seaGrad.appendChild(s);
+  });
+  defs.appendChild(seaGrad);
+
+  // Wave hatching pattern
+  const wavePat = svgEl('pattern');
+  svgAttr(wavePat, { id: 'wave-pat', x: 0, y: 0, width: 48, height: 18,
+    patternUnits: 'userSpaceOnUse' });
+  const wp = svgEl('path');
+  svgAttr(wp, { d: 'M0,9 Q6,4 12,9 Q18,14 24,9 Q30,4 36,9 Q42,14 48,9',
+    stroke: '#6a90a8', 'stroke-width': 0.55, fill: 'none' });
+  wavePat.appendChild(wp);
+  defs.appendChild(wavePat);
+
+  svg.appendChild(defs);
+
+  // ── Sea background ────────────────────────────────────────────────────────
   const bg = svgEl('rect');
-  svgAttr(bg, { width: 760, height: 310, fill: '#b8d4e0', rx: 4 });
+  svgAttr(bg, { width: 760, height: 310, fill: 'url(#sea-grad)' });
   svg.appendChild(bg);
 
-  // Grid
-  for (let x = 76; x < 760; x += 76) svgLine(svg, x, 0, x, 310, '#9ab8c8', 0.4);
-  for (let y = 62; y < 310; y += 62) svgLine(svg, 0, y, 760, y, '#9ab8c8', 0.4);
+  // Wave overlay
+  const waveRect = svgEl('rect');
+  svgAttr(waveRect, { width: 760, height: 310, fill: 'url(#wave-pat)', opacity: 0.45 });
+  svg.appendChild(waveRect);
 
-  // Land masses
+  // ── Cartographic double-line border ──────────────────────────────────────
+  const fr1 = svgEl('rect');
+  svgAttr(fr1, { x: 4, y: 4, width: 752, height: 302, fill: 'none',
+    stroke: '#30505e', 'stroke-width': 2.5, opacity: 0.45 });
+  svg.appendChild(fr1);
+  const fr2 = svgEl('rect');
+  svgAttr(fr2, { x: 9, y: 9, width: 742, height: 292, fill: 'none',
+    stroke: '#30505e', 'stroke-width': 0.8, opacity: 0.25 });
+  svg.appendChild(fr2);
+
+  // ── Navigation grid (latitude / longitude lines) ──────────────────────────
+  for (let x = 76; x < 760; x += 76) svgLine(svg, x, 0, x, 310, '#305870', 0.15);
+  for (let y = 62; y < 310; y += 62) svgLine(svg, 0, y, 760, y, '#305870', 0.15);
+
+  // ── Land masses (SVG paths — stylised 1700s cartography) ──────────────────
+  const lf = '#c8b068', ls = '#7a5c18';
+
+  // Cuba — large elongated island (Havana at 228,182)
+  const cuba = svgEl('path');
+  svgAttr(cuba, {
+    d: 'M118,180 C138,170 162,168 186,170 C206,171 224,174 244,176 C264,178 284,177 304,182 C318,187 320,194 308,198 C290,203 266,201 242,198 C218,195 194,191 170,188 C148,186 126,188 114,185 Z',
+    fill: lf, stroke: ls, 'stroke-width': 1.2, opacity: 0.90,
+  });
+  svg.appendChild(cuba);
+
+  // Hispaniola — near Tortuga (508,168)
+  const hisp = svgEl('path');
+  svgAttr(hisp, {
+    d: 'M452,178 C465,170 482,168 500,169 C518,168 536,172 551,179 C558,187 551,197 534,200 C516,202 496,200 478,196 C462,192 448,190 446,185 Z',
+    fill: lf, stroke: ls, 'stroke-width': 1.2, opacity: 0.90,
+  });
+  svg.appendChild(hisp);
+
+  // Jamaica — Port Royal at (390,256)
+  const jamaica = svgEl('path');
+  svgAttr(jamaica, {
+    d: 'M358,254 C368,248 381,246 395,248 C407,247 417,252 422,259 C415,268 400,270 386,268 C372,266 360,262 354,258 Z',
+    fill: lf, stroke: ls, 'stroke-width': 1.2, opacity: 0.90,
+  });
+  svg.appendChild(jamaica);
+
+  // New Providence / Bahamas — Nassau at (378,88)
+  const nassauIsle = svgEl('path');
+  svgAttr(nassauIsle, {
+    d: 'M364,88 C371,82 382,80 394,82 C404,81 411,86 412,93 C404,99 392,99 380,97 C368,96 360,93 358,89 Z',
+    fill: lf, stroke: ls, 'stroke-width': 1.2, opacity: 0.86,
+  });
+  svg.appendChild(nassauIsle);
+
+  // Scatter of small cays and islets for atmosphere
   [
-    [195, 202, 100, 24, -18, 0.55], [498, 188, 60, 18, -10, 0.55],
-    [385, 260,  32, 12,   0, 0.55], [370,  98,  22,  8,  10, 0.50],
-    [400,  90,  14,  6,  -5, 0.45],
-  ].forEach(([cx, cy, rx, ry, rot, op]) => {
-    const e = svgEl('ellipse');
-    svgAttr(e, { cx, cy, rx, ry, fill: '#c8b56e', opacity: op, transform: `rotate(${rot} ${cx} ${cy})` });
-    svg.appendChild(e);
+    'M330,118 Q337,114 343,116 Q347,119 344,123 Q337,124 331,121 Z',
+    'M447,134 Q453,130 458,132 Q461,136 457,139 Q450,140 446,137 Z',
+    'M568,197 Q574,193 580,195 Q583,199 578,202 Q571,202 566,199 Z',
+    'M617,138 Q622,135 626,137 Q628,141 624,143 Q618,143 615,140 Z',
+    'M160,237 Q165,233 169,235 Q171,238 167,241 Q161,241 158,238 Z',
+    'M597,249 Q601,246 605,248 Q607,251 603,253 Q598,253 595,250 Z',
+    'M680,190 Q684,187 688,189 Q689,192 686,194 Q681,194 679,191 Z',
+  ].forEach(d => {
+    const isle = svgEl('path');
+    svgAttr(isle, { d, fill: lf, stroke: ls, 'stroke-width': 0.8, opacity: 0.62 });
+    svg.appendChild(isle);
   });
 
-  // Routes
+  // ── Routes ────────────────────────────────────────────────────────────────
   Object.values(ROUTES).forEach(route => {
     const [p1id, p2id] = route.ports;
     const p1 = PORTS[p1id], p2 = PORTS[p2id];
@@ -377,18 +454,17 @@ function renderMap() {
     const mx = (p1.x + p2.x) / 2;
     const my = (p1.y + p2.y) / 2;
 
-    // Locked route — show greyed out with progress indicator
     if (!routeState.unlocked) {
-      const cond    = UNLOCK_CONDITIONS[route.id];
-      const done    = cond ? (state.routes[cond.prereq]?.missionsCompleted || 0) : 0;
-      const needed  = cond?.needed || 3;
+      const cond   = UNLOCK_CONDITIONS[route.id];
+      const done   = cond ? (state.routes[cond.prereq]?.missionsCompleted || 0) : 0;
+      const needed = cond?.needed || 3;
       const lockedLine = svgEl('line');
       svgAttr(lockedLine, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
-        stroke: '#7a8a95', 'stroke-width': 1.5, 'stroke-dasharray': '5,9', opacity: 0.35 });
+        stroke: '#607888', 'stroke-width': 1.2, 'stroke-dasharray': '3,10', opacity: 0.28 });
       svg.appendChild(lockedLine);
-      svgText(svg, `🔒 ${done}/${needed}`, mx, my + 4, {
-        'text-anchor': 'middle', 'font-size': 10.5, fill: '#4a5a65',
-        'font-family': 'Georgia, serif', opacity: 0.6,
+      svgText(svg, `⚿ ${done}/${needed}`, mx, my + 4, {
+        'text-anchor': 'middle', 'font-size': 10, fill: '#3a4a55',
+        'font-family': 'Georgia, serif', 'font-style': 'italic', opacity: 0.55,
       });
       return;
     }
@@ -399,14 +475,15 @@ function renderMap() {
     const active = state.activeMissions.some(m => m.routeId === route.id);
     const ready  = state.activeMissions.find(m => m.routeId === route.id && m.completesAt <= now);
 
-    // Dashed line
+    // Nautical dotted line (classic chart style)
     const line = svgEl('line');
     svgAttr(line, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
-      stroke: color, 'stroke-width': isSel ? 4.5 : 2.5,
-      'stroke-dasharray': '9,6', opacity: isSel ? 1 : 0.85 });
+      stroke: color, 'stroke-width': isSel ? 3.5 : 2.2,
+      'stroke-dasharray': isSel ? '3,6' : '2,9',
+      'stroke-linecap': 'round', opacity: isSel ? 1.0 : 0.68 });
     svg.appendChild(line);
 
-    // Invisible wide hit area
+    // Invisible hit zone
     const hit = svgEl('line');
     svgAttr(hit, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
       stroke: 'transparent', 'stroke-width': 24,
@@ -415,52 +492,100 @@ function renderMap() {
 
     if (active) {
       const pulse = svgEl('circle');
-      svgAttr(pulse, { cx: mx, cy: my, r: 10, fill: '#f4e8c1', stroke: color, 'stroke-width': 2, class: 'mission-pulse' });
+      svgAttr(pulse, { cx: mx, cy: my, r: 9, fill: '#f0e8c4', stroke: color,
+        'stroke-width': 1.5, class: 'mission-pulse' });
       svg.appendChild(pulse);
       svgText(svg, '⛵', mx, my + 5, { 'text-anchor': 'middle', 'font-size': 11 });
     }
 
     if (ready) {
       svgText(svg, '✓ PRONTA', mx, my - (active ? 18 : 6), {
-        'text-anchor': 'middle', 'font-size': 10, fill: '#4a7c59',
-        'font-weight': 'bold', 'font-family': 'Georgia, serif',
+        'text-anchor': 'middle', 'font-size': 9.5, fill: '#3a6a48',
+        'font-weight': 'bold', 'font-family': 'Georgia, serif', 'letter-spacing': 1,
       });
     }
   });
 
-  // Ports
+  // ── Port markers ──────────────────────────────────────────────────────────
   Object.values(PORTS).forEach(port => {
     if (!state.unlockedPorts.includes(port.id)) return;
+    // Outer decorative ring
+    const ring = svgEl('circle');
+    svgAttr(ring, { cx: port.x, cy: port.y, r: 14, fill: 'none',
+      stroke: '#2c1810', 'stroke-width': 0.8, opacity: 0.30 });
+    svg.appendChild(ring);
+    // Filled inner circle
     const c = svgEl('circle');
-    svgAttr(c, { cx: port.x, cy: port.y, r: 11, fill: '#f4e8c1', stroke: '#2c1810', 'stroke-width': 2 });
+    svgAttr(c, { cx: port.x, cy: port.y, r: 9, fill: '#f0e8c4',
+      stroke: '#2c1810', 'stroke-width': 1.8 });
     svg.appendChild(c);
-    svgText(svg, '⚓', port.x, port.y + 5, { 'text-anchor': 'middle', 'font-size': 10 });
-    svgText(svg, port.name.toUpperCase(), port.x, port.y + 25, {
-      'text-anchor': 'middle', 'font-size': 10.5, fill: '#2c1810',
-      'font-weight': 'bold', 'font-family': 'Georgia, serif', 'letter-spacing': 1,
+    svgText(svg, '⚓', port.x, port.y + 4.5, { 'text-anchor': 'middle', 'font-size': 9 });
+    svgText(svg, port.name.toUpperCase(), port.x, port.y + 27, {
+      'text-anchor': 'middle', 'font-size': 9.5, fill: '#1a0e08',
+      'font-weight': 'bold', 'font-family': 'Georgia, serif', 'letter-spacing': 1.5,
     });
   });
 
-  // Compass rose
-  const g = svgEl('g');
-  const oc = svgEl('circle');
-  svgAttr(oc, { cx: 706, cy: 48, r: 30, fill: 'none', stroke: '#2c1810', 'stroke-width': 0.8, opacity: 0.35 });
-  g.appendChild(oc);
+  // ── Compass Rose ──────────────────────────────────────────────────────────
+  const ccx = 706, ccy = 56;
+  // Background fill
+  const cpBg = svgEl('circle');
+  svgAttr(cpBg, { cx: ccx, cy: ccy, r: 30, fill: '#f0e8c4',
+    stroke: '#8b6914', 'stroke-width': 0.8, opacity: 0.82 });
+  svg.appendChild(cpBg);
+  // Outer decorative ring
+  const cpRing = svgEl('circle');
+  svgAttr(cpRing, { cx: ccx, cy: ccy, r: 34, fill: 'none',
+    stroke: '#8b6914', 'stroke-width': 0.8, opacity: 0.42 });
+  svg.appendChild(cpRing);
+  // Inner reference ring
+  const cpMid = svgEl('circle');
+  svgAttr(cpMid, { cx: ccx, cy: ccy, r: 15, fill: 'none',
+    stroke: '#2c1810', 'stroke-width': 0.5, opacity: 0.22 });
+  svg.appendChild(cpMid);
+  // 8-point diamond star
   [0, 45, 90, 135, 180, 225, 270, 315].forEach(deg => {
-    const rad = (deg - 90) * Math.PI / 180;
-    const isCard = deg % 90 === 0;
-    const l = svgEl('line');
-    svgAttr(l, { x1: 706 + (isCard ? 5 : 9) * Math.cos(rad), y1: 48 + (isCard ? 5 : 9) * Math.sin(rad),
-      x2: 706 + (isCard ? 26 : 17) * Math.cos(rad), y2: 48 + (isCard ? 26 : 17) * Math.sin(rad),
-      stroke: '#2c1810', 'stroke-width': isCard ? 1.4 : 0.7, opacity: 0.4 });
-    g.appendChild(l);
+    const isCard  = deg % 90 === 0;
+    const rad     = (deg - 90) * Math.PI / 180;
+    const perpR   = rad + Math.PI / 2;
+    const tipLen  = isCard ? 26 : 16;
+    const sw      = isCard ? 5.5 : 3.5;
+    const tipX    = ccx + tipLen * Math.cos(rad);
+    const tipY    = ccy + tipLen * Math.sin(rad);
+    const s1x = ccx + sw * Math.cos(perpR), s1y = ccy + sw * Math.sin(perpR);
+    const s2x = ccx - sw * Math.cos(perpR), s2y = ccy - sw * Math.sin(perpR);
+    const poly = svgEl('polygon');
+    svgAttr(poly, {
+      points: `${tipX.toFixed(1)},${tipY.toFixed(1)} ${s1x.toFixed(1)},${s1y.toFixed(1)} ${ccx},${ccy} ${s2x.toFixed(1)},${s2y.toFixed(1)}`,
+      fill: deg === 0 ? '#8b2020' : (isCard ? '#2c1810' : '#f0e8c4'),
+      stroke: '#2c1810', 'stroke-width': 0.5, opacity: 0.88,
+    });
+    svg.appendChild(poly);
   });
-  svgText(g, 'N', 706, 30, { 'text-anchor': 'middle', 'font-size': 9, 'font-weight': 'bold',
-    fill: '#8b2020', opacity: 0.55, 'font-family': 'Georgia, serif' });
-  svg.appendChild(g);
+  // Center dot
+  const cd1 = svgEl('circle'); svgAttr(cd1, { cx: ccx, cy: ccy, r: 3.5, fill: '#8b6914' }); svg.appendChild(cd1);
+  const cd2 = svgEl('circle'); svgAttr(cd2, { cx: ccx, cy: ccy, r: 1.5, fill: '#f0e8c4' }); svg.appendChild(cd2);
+  // Cardinal labels
+  [['N', ccx, ccy - 37], ['S', ccx, ccy + 43], ['E', ccx + 41, ccy + 4], ['W', ccx - 38, ccy + 4]].forEach(([lbl, lx, ly]) => {
+    svgText(svg, lbl, lx, ly, {
+      'text-anchor': 'middle', 'font-size': 9, 'font-weight': 'bold',
+      fill: lbl === 'N' ? '#8b2020' : '#1a0e08',
+      'font-family': 'Georgia, serif', opacity: 0.88,
+    });
+  });
 
-  svgText(svg, 'MARE CARIBAEUM — ANNO DOMINI MDCCXVIII', 50, 298, {
-    'font-size': 8.5, fill: '#7a9eb0', 'font-family': 'Georgia, serif', 'font-style': 'italic',
+  // ── Cartouche (map title box) ─────────────────────────────────────────────
+  const cRect = svgEl('rect');
+  svgAttr(cRect, { x: 14, y: 274, width: 250, height: 26, rx: 2,
+    fill: '#f0e8c4', stroke: '#8b6914', 'stroke-width': 0.8, opacity: 0.82 });
+  svg.appendChild(cRect);
+  svgText(svg, 'MARE CARIBAEUM', 139, 284, {
+    'text-anchor': 'middle', 'font-size': 8.5, fill: '#3a2808',
+    'font-family': 'Georgia, serif', 'font-style': 'italic', 'letter-spacing': 2.5,
+  });
+  svgText(svg, 'Anno Domini MDCCXVIII', 139, 295, {
+    'text-anchor': 'middle', 'font-size': 7.5, fill: '#5a3818',
+    'font-family': 'Georgia, serif', 'font-style': 'italic',
   });
 
   container.innerHTML = '';

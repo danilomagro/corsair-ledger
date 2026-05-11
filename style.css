@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=IM+Fell+English:ital@0;1&display=swap');
+
 /* ─── Reset & base ────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -21,10 +23,13 @@
 html, body {
   height: 100%;
   overflow: hidden;
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'IM Fell English', Georgia, 'Times New Roman', serif;
   background: var(--parchment);
+  background-image:
+    radial-gradient(ellipse at 12% 20%, rgba(139,105,20,0.07) 0%, transparent 48%),
+    radial-gradient(ellipse at 88% 80%, rgba(44,24,16,0.05) 0%, transparent 42%);
   color: var(--ink);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 /* ─── Layout ─────────────────────────────────────────────────────────────── */
@@ -98,12 +103,12 @@ body {
 }
 
 #game-title {
-  font-size: 18px;
-  font-weight: normal;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--gold);
-  letter-spacing: 3px;
-  font-variant: small-caps;
-  text-shadow: 0 0 12px #c8a84b55;
+  letter-spacing: 4px;
+  text-shadow: 0 0 16px #c8a84b66, 0 1px 0 #00000044;
 }
 
 #resources {
@@ -123,9 +128,9 @@ body {
 
 .res-label {
   color: var(--parchment-dk);
-  font-size: 11px;
-  font-variant: small-caps;
-  letter-spacing: 1px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 10px;
+  letter-spacing: 1.5px;
 }
 
 #resources span[id] {
@@ -185,9 +190,8 @@ body {
   padding: 3px 10px;
   border-radius: 2px;
   cursor: pointer;
-  font-size: 11px;
-  font-family: Georgia, serif;
-  font-variant: small-caps;
+  font-size: 10.5px;
+  font-family: 'Cinzel', Georgia, serif;
   letter-spacing: 0.5px;
   transition: background 0.15s, color 0.15s;
 }
@@ -206,9 +210,9 @@ body {
 
 /* ─── Fleet panel ─────────────────────────────────────────────────────────── */
 .panel-title {
+  font-family: 'Cinzel', Georgia, serif;
   font-size: 11px;
-  font-variant: small-caps;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   color: var(--gold-dk);
   border-bottom: 1px solid var(--border-lt);
   padding-bottom: 5px;
@@ -277,9 +281,8 @@ body {
   padding: 3px 8px;
   border-radius: 2px;
   cursor: pointer;
-  font-size: 11px;
-  font-family: Georgia, serif;
-  font-variant: small-caps;
+  font-size: 10.5px;
+  font-family: 'Cinzel', Georgia, serif;
   transition: background 0.15s;
 }
 
@@ -303,9 +306,10 @@ body {
 }
 
 .panel-route-header h3 {
-  font-size: 15px;
-  font-weight: bold;
-  letter-spacing: 1px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
   color: var(--ink);
 }
 
@@ -330,9 +334,9 @@ body {
 }
 
 .missions-title {
-  font-size: 11px;
-  font-variant: small-caps;
-  letter-spacing: 1.5px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 10.5px;
+  letter-spacing: 2px;
   color: var(--gold-dk);
   margin: 10px 0 6px;
   border-bottom: 1px solid var(--border-lt);
@@ -375,9 +379,8 @@ body {
   padding: 4px 14px;
   border-radius: 2px;
   cursor: pointer;
-  font-size: 11px;
-  font-family: Georgia, serif;
-  font-variant: small-caps;
+  font-size: 10.5px;
+  font-family: 'Cinzel', Georgia, serif;
   letter-spacing: 0.5px;
   transition: background 0.15s;
 }
@@ -418,9 +421,9 @@ body {
 }
 
 .ship-select-title {
-  font-size: 11px;
-  font-variant: small-caps;
-  letter-spacing: 1.5px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 10.5px;
+  letter-spacing: 2px;
   color: var(--gold-dk);
   margin: 10px 0 5px;
   border-bottom: 1px solid var(--border-lt);
@@ -572,10 +575,9 @@ body {
   color: var(--gold);
   border: 2px solid var(--gold-dk);
   border-radius: 3px;
-  font-size: 14px;
-  font-family: Georgia, serif;
-  font-variant: small-caps;
-  letter-spacing: 2px;
+  font-size: 13px;
+  font-family: 'Cinzel', Georgia, serif;
+  letter-spacing: 3px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
@@ -655,9 +657,8 @@ body {
   padding: 4px 14px;
   border-radius: 2px;
   cursor: pointer;
-  font-size: 11px;
-  font-family: Georgia, serif;
-  font-variant: small-caps;
+  font-size: 10.5px;
+  font-family: 'Cinzel', Georgia, serif;
   letter-spacing: 0.5px;
   transition: background 0.15s;
 }
@@ -695,10 +696,10 @@ body {
 .battle-result.defeat  .battle-result-header { color: #5a1a1a; }
 
 .battle-result-outcome {
-  font-size: 26px;
-  font-weight: bold;
-  font-variant: small-caps;
-  letter-spacing: 3px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 4px;
 }
 
 .battle-result.victory .battle-result-outcome { color: var(--green); }
@@ -719,10 +720,9 @@ body {
   padding: 7px 22px;
   border-radius: 2px;
   cursor: pointer;
-  font-size: 12px;
-  font-family: Georgia, serif;
-  font-variant: small-caps;
-  letter-spacing: 1px;
+  font-size: 11px;
+  font-family: 'Cinzel', Georgia, serif;
+  letter-spacing: 1.5px;
   transition: background 0.15s;
 }
 
@@ -764,9 +764,9 @@ body {
   padding: 10px 14px;
   border-bottom: 1px solid var(--gold-dk);
   color: var(--gold);
-  font-variant: small-caps;
-  letter-spacing: 2px;
-  font-size: 12px;
+  font-family: 'Cinzel', Georgia, serif;
+  letter-spacing: 3px;
+  font-size: 11px;
 }
 
 #btn-close-log {
