@@ -47,10 +47,15 @@ body {
 }
 
 #map-section {
-  flex: 0 0 52%;
+  flex: 0 0 auto;
+  width: 100%;
+  /* Height tracks the image 3:2 ratio (507/760 ≈ 66.7% of viewport width),
+     capped at 55 vh so fleet/detail panels always have room.
+     With preserveAspectRatio:meet the full antique image is visible;
+     any residual letterbox strips use the antique-parchment colour below. */
+  height: min(55vh, calc(100vw * 507 / 760));
   overflow: hidden;
   border-bottom: 2px solid var(--border);
-  /* fallback colour for any letterboxing — matches the antique map border tone */
   background: #6b5020;
 }
 

@@ -4,20 +4,21 @@
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
-// Port coordinates derived from real geography projected onto the map image:
-// longitude range 100°W–30°E (130°→760 px), latitude range 65°N–5°S (70°→507 px)
+// Port coordinates estimated visually from assets/map-background.jpg (1536×1024).
+// Scale 1536→760 and 1024→507 (≈ ×0.495). Positions match islands/coasts visible
+// in the antique Atlantic map image; not a cartographic projection.
 const PORTS = {
   // ── Caraibi ──
-  nassau:     { id: 'nassau',     name: 'Nassau',     x: 134, y: 290, desc: 'Cuore dei Caraibi — porto libero' },
-  havana:     { id: 'havana',     name: 'Havana',     x: 105, y: 304, desc: 'Fortezza spagnola di Cuba' },
-  tortuga:    { id: 'tortuga',    name: 'Tortuga',    x: 158, y: 326, desc: 'Covo dei corsari di Hispaniola' },
-  port_royal: { id: 'port_royal', name: 'Port Royal', x: 134, y: 340, desc: 'Porto britannico della Giamaica' },
+  nassau:     { id: 'nassau',     name: 'Nassau',     x: 137, y: 269, desc: 'Cuore dei Caraibi — porto libero' },
+  havana:     { id: 'havana',     name: 'Havana',     x: 106, y: 284, desc: 'Fortezza spagnola di Cuba' },
+  tortuga:    { id: 'tortuga',    name: 'Tortuga',    x: 175, y: 279, desc: 'Covo dei corsari di Hispaniola' },
+  port_royal: { id: 'port_royal', name: 'Port Royal', x: 129, y: 304, desc: 'Porto britannico della Giamaica' },
   // ── Costa Americana ──
-  charleston: { id: 'charleston', name: 'Charleston', x: 117, y: 232, desc: 'Porto coloniale della Carolina del Sud' },
-  boston:     { id: 'boston',     name: 'Boston',     x: 170, y: 167, desc: 'Capitale del commercio del New England' },
+  charleston: { id: 'charleston', name: 'Charleston', x:  91, y: 238, desc: 'Porto coloniale della Carolina del Sud' },
+  boston:     { id: 'boston',     name: 'Boston',     x:  99, y: 193, desc: 'Capitale del commercio del New England' },
   // ── Africa Occidentale ──
-  dakar:      { id: 'dakar',      name: 'Dakar',      x: 485, y: 365, desc: 'Porto senegalese sull\'Atlantico' },
-  cape_verde: { id: 'cape_verde', name: 'Capo Verde', x: 450, y: 355, desc: 'Isole atlantiche — crocevia dei mari' },
+  dakar:      { id: 'dakar',      name: 'Dakar',      x: 494, y: 288, desc: 'Porto senegalese sull\'Atlantico' },
+  cape_verde: { id: 'cape_verde', name: 'Capo Verde', x: 373, y: 292, desc: 'Isole atlantiche — crocevia dei mari' },
 };
 
 const DANGER_COLOR = { 0: '#4a7c59', 1: '#b89a2a', 2: '#c87428', 3: '#8b2020' };
@@ -491,9 +492,8 @@ function renderMap() {
   const now       = Date.now();
   const svg       = svgEl('svg');
   // viewBox matches the 3:2 image ratio (1536×1024 source).
-  // preserveAspectRatio:slice fills the container while keeping proportions;
-  // all 8 ports land in the visible vertical band (approx. y 130–390).
-  svgAttr(svg, { viewBox: '0 0 760 507', id: 'map-svg', preserveAspectRatio: 'xMidYMid slice' });
+  // meet → full image always visible; #map-section height set to match 3:2 in CSS.
+  svgAttr(svg, { viewBox: '0 0 760 507', id: 'map-svg', preserveAspectRatio: 'xMidYMid meet' });
 
   // ── Background: assets/map-background.jpg ────────────────────────────────
   const bgImg = svgEl('image');
@@ -563,11 +563,11 @@ function renderMap() {
   const PORT_LABEL = {
     boston:     { dx:  18, dy:   3, anchor: 'start'  },  // right
     charleston: { dx:  18, dy:   3, anchor: 'start'  },  // right
-    nassau:     { dx:  18, dy:   3, anchor: 'start'  },  // right
-    havana:     { dx:   0, dy:  21, anchor: 'middle' },   // below (left of Nassau)
+    nassau:     { dx:   0, dy: -16, anchor: 'middle' },   // above
+    havana:     { dx:   0, dy:  21, anchor: 'middle' },   // below
     tortuga:    { dx:  18, dy:   3, anchor: 'start'  },   // right
-    port_royal: { dx:   0, dy:  21, anchor: 'middle' },   // below (same lon as Nassau)
-    cape_verde: { dx:   0, dy: -16, anchor: 'middle' },   // above (near bottom of view)
+    port_royal: { dx:  18, dy:   3, anchor: 'start'  },   // right
+    cape_verde: { dx:   0, dy: -16, anchor: 'middle' },   // above (near compass rose)
     dakar:      { dx:  18, dy:   3, anchor: 'start'  },   // right
   };
 
