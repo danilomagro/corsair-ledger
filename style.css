@@ -49,14 +49,12 @@ body {
 #map-section {
   flex: 0 0 auto;
   width: 100%;
-  /* Height tracks the image 3:2 ratio (507/760 ≈ 66.7% of viewport width),
-     capped at 55 vh so fleet/detail panels always have room.
-     With preserveAspectRatio:meet the full antique image is visible;
-     any residual letterbox strips use the antique-parchment colour below. */
-  height: min(55vh, calc(100vw * 507 / 760));
+  /* Height follows the procedural SVG viewBox ratio 880:300 ≈ 34.1% of width,
+     capped at 52 vh so fleet/detail panels keep adequate space. */
+  height: min(52vh, calc(100vw * 300 / 880));
   overflow: hidden;
   border-bottom: 2px solid var(--border);
-  background: #6b5020;
+  background: var(--sea);
 }
 
 #map-container {

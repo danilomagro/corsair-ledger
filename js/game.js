@@ -4,21 +4,21 @@
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 
-// Port coordinates estimated visually from assets/map-background.jpg (1536×1024).
-// Scale 1536→760 and 1024→507 (≈ ×0.495). Positions match islands/coasts visible
-// in the antique Atlantic map image; not a cartographic projection.
+// Port coordinates for procedural SVG map — viewBox 0 0 880 300.
+// Americas strip x≈0-97, Caribbean cluster x≈140-260, Atlantic centre,
+// Cape Verde x≈590, Africa coast x≈722-880.
 const PORTS = {
   // ── Caraibi ──
-  nassau:     { id: 'nassau',     name: 'Nassau',     x: 137, y: 269, desc: 'Cuore dei Caraibi — porto libero' },
-  havana:     { id: 'havana',     name: 'Havana',     x: 106, y: 284, desc: 'Fortezza spagnola di Cuba' },
-  tortuga:    { id: 'tortuga',    name: 'Tortuga',    x: 175, y: 279, desc: 'Covo dei corsari di Hispaniola' },
-  port_royal: { id: 'port_royal', name: 'Port Royal', x: 129, y: 304, desc: 'Porto britannico della Giamaica' },
+  nassau:     { id: 'nassau',     name: 'Nassau',     x: 200, y: 145, desc: 'Cuore dei Caraibi — porto libero' },
+  havana:     { id: 'havana',     name: 'Havana',     x: 152, y: 175, desc: 'Fortezza spagnola di Cuba' },
+  tortuga:    { id: 'tortuga',    name: 'Tortuga',    x: 250, y: 162, desc: 'Covo dei corsari di Hispaniola' },
+  port_royal: { id: 'port_royal', name: 'Port Royal', x: 205, y: 213, desc: 'Porto britannico della Giamaica' },
   // ── Costa Americana ──
-  charleston: { id: 'charleston', name: 'Charleston', x:  91, y: 238, desc: 'Porto coloniale della Carolina del Sud' },
-  boston:     { id: 'boston',     name: 'Boston',     x:  99, y: 193, desc: 'Capitale del commercio del New England' },
+  charleston: { id: 'charleston', name: 'Charleston', x:  75, y: 115, desc: 'Porto coloniale della Carolina del Sud' },
+  boston:     { id: 'boston',     name: 'Boston',     x:  88, y:  58, desc: 'Capitale del commercio del New England' },
   // ── Africa Occidentale ──
-  dakar:      { id: 'dakar',      name: 'Dakar',      x: 494, y: 288, desc: 'Porto senegalese sull\'Atlantico' },
-  cape_verde: { id: 'cape_verde', name: 'Capo Verde', x: 373, y: 292, desc: 'Isole atlantiche — crocevia dei mari' },
+  dakar:      { id: 'dakar',      name: 'Dakar',      x: 720, y: 192, desc: 'Porto senegalese sull\'Atlantico' },
+  cape_verde: { id: 'cape_verde', name: 'Capo Verde', x: 590, y: 188, desc: 'Isole atlantiche — crocevia dei mari' },
 };
 
 const DANGER_COLOR = { 0: '#4a7c59', 1: '#b89a2a', 2: '#c87428', 3: '#8b2020' };
@@ -491,19 +491,163 @@ function renderMap() {
   const container = document.getElementById('map-container');
   const now       = Date.now();
   const svg       = svgEl('svg');
-  // viewBox matches the 3:2 image ratio (1536×1024 source).
-  // meet → full image always visible; #map-section height set to match 3:2 in CSS.
-  svgAttr(svg, { viewBox: '0 0 760 507', id: 'map-svg', preserveAspectRatio: 'xMidYMid meet' });
+  // Wide viewBox: Americas left, Caribbean centre-left, Atlantic, Africa right.
+  svgAttr(svg, { viewBox: '0 0 880 300', id: 'map-svg', preserveAspectRatio: 'xMidYMid meet' });
 
-  // ── Background: assets/map-background.jpg ────────────────────────────────
-  const bgImg = svgEl('image');
-  svgAttr(bgImg, { href: 'assets/map-background.jpg', x: 0, y: 0, width: 760, height: 507 });
-  svg.appendChild(bgImg);
+  // ── Defs ──────────────────────────────────────────────────────────────────
+  const defs = svgEl('defs');
 
-  // Thin vignette overlay — improves route/label legibility without hiding the art
-  const vignette = svgEl('rect');
-  svgAttr(vignette, { width: 760, height: 507, fill: '#0d0905', opacity: 0.08 });
-  svg.appendChild(vignette);
+  // Sea — aged parchment ocean (warm blue-grey)
+  const sg = svgEl('linearGradient');
+  svgAttr(sg, { id: 'sg', x1: '0%', y1: '0%', x2: '100%', y2: '100%' });
+  [['0%','#bcccd8'],['50%','#a8bcc8'],['100%','#90a8bc']].forEach(([o,c]) => {
+    const s = svgEl('stop'); svgAttr(s, { offset: o, 'stop-color': c }); sg.appendChild(s);
+  });
+  defs.appendChild(sg);
+
+  // Wave hatching
+  const wp = svgEl('pattern');
+  svgAttr(wp, { id: 'wp', x: 0, y: 0, width: 44, height: 16, patternUnits: 'userSpaceOnUse' });
+  const wpath = svgEl('path');
+  svgAttr(wpath, { d: 'M0,8 Q5.5,3 11,8 Q16.5,13 22,8 Q27.5,3 33,8 Q38.5,13 44,8', stroke: '#5a7890', 'stroke-width': 0.5, fill: 'none' });
+  wp.appendChild(wpath); defs.appendChild(wp);
+
+  // Parchment-aging radial gradients (age spots)
+  [['ag1','16%','18%','rgba(112,84,18,0.13)'],
+   ['ag2','84%','80%','rgba(44,24,16,0.10)'],
+   ['ag3','50%','8%', 'rgba(96,72,14,0.08)']].forEach(([id,cx,cy,clr]) => {
+    const rg = svgEl('radialGradient');
+    svgAttr(rg, { id, cx, cy, r: '38%' });
+    [['0%',clr],['100%','rgba(0,0,0,0)']].forEach(([o,c]) => {
+      const s = svgEl('stop'); svgAttr(s, { offset: o, 'stop-color': c }); rg.appendChild(s);
+    });
+    defs.appendChild(rg);
+  });
+
+  svg.appendChild(defs);
+
+  // ── Sea background ────────────────────────────────────────────────────────
+  const bg = svgEl('rect'); svgAttr(bg, { width: 880, height: 300, fill: 'url(#sg)' }); svg.appendChild(bg);
+  const wr = svgEl('rect'); svgAttr(wr, { width: 880, height: 300, fill: 'url(#wp)', opacity: 0.32 }); svg.appendChild(wr);
+  ['ag1','ag2','ag3'].forEach(id => {
+    const r = svgEl('rect'); svgAttr(r, { width: 880, height: 300, fill: `url(#${id})` }); svg.appendChild(r);
+  });
+
+  // Double frame border
+  const fr1 = svgEl('rect'); svgAttr(fr1, { x: 4, y: 4, width: 872, height: 292, fill: 'none', stroke: '#3a2808', 'stroke-width': 2.5, opacity: 0.50 }); svg.appendChild(fr1);
+  const fr2 = svgEl('rect'); svgAttr(fr2, { x: 9, y: 9, width: 862, height: 282, fill: 'none', stroke: '#3a2808', 'stroke-width': 0.8, opacity: 0.28 }); svg.appendChild(fr2);
+  // Faint graticule
+  for (let x = 88; x < 880; x += 88) svgLine(svg, x, 0, x, 300, '#3a5068', 0.09);
+  for (let y = 60; y < 300; y += 60) svgLine(svg, 0, y, 880, y, '#3a5068', 0.09);
+
+  // ── Land masses ───────────────────────────────────────────────────────────
+  const lf = '#c8a84b', ls = '#8b6914';
+
+  // Americas seaboard — sinuous thin strip (coast edge ~x 90-97)
+  const am = svgEl('path');
+  svgAttr(am, {
+    d: 'M0,0 L74,0 C80,14 86,28 92,46 C96,64 98,86 97,110 C95,134 91,158 85,180 C78,202 69,220 58,238 C46,256 34,270 22,284 L0,284 Z',
+    fill: lf, stroke: ls, 'stroke-width': 1.2, opacity: 0.90,
+  });
+  svg.appendChild(am);
+  svgText(svg, 'AMERICA', 40, 150, {
+    'text-anchor': 'middle', 'font-size': 8, fill: '#3a2808',
+    'font-family': 'Georgia, serif', 'font-style': 'italic', opacity: 0.48,
+    transform: 'rotate(-90,40,150)',
+  });
+
+  // Africa coast — with westward Dakar bulge (tip ≈ x 720 at y 192)
+  const af = svgEl('path');
+  svgAttr(af, {
+    d: 'M880,0 L762,0 C758,18 754,40 750,64 C746,90 742,118 738,144 C734,164 728,180 720,192 C728,206 736,222 742,242 C748,260 752,274 756,284 L880,284 Z',
+    fill: lf, stroke: ls, 'stroke-width': 1.2, opacity: 0.90,
+  });
+  svg.appendChild(af);
+  svgText(svg, 'AFRICA', 836, 150, {
+    'text-anchor': 'middle', 'font-size': 8, fill: '#3a2808',
+    'font-family': 'Georgia, serif', 'font-style': 'italic', opacity: 0.48,
+    transform: 'rotate(90,836,150)',
+  });
+
+  // Cuba — elongated E-W (Havana 152,175 is W end)
+  const cuba = svgEl('path');
+  svgAttr(cuba, {
+    d: 'M112,172 C124,164 140,162 155,163 C170,163 186,167 200,172 C212,175 220,179 222,185 C218,193 204,196 185,195 C165,192 143,188 126,185 C110,182 104,177 108,173 Z',
+    fill: lf, stroke: ls, 'stroke-width': 1.0, opacity: 0.90,
+  });
+  svg.appendChild(cuba);
+
+  // Hispaniola — Haiti (Tortuga 250,162 is NW corner)
+  const hisp = svgEl('path');
+  svgAttr(hisp, {
+    d: 'M232,160 C242,153 256,151 270,153 C282,152 294,156 303,163 C307,171 303,180 290,183 C274,185 255,182 239,178 C224,174 218,168 222,161 Z',
+    fill: lf, stroke: ls, 'stroke-width': 1.0, opacity: 0.90,
+  });
+  svg.appendChild(hisp);
+
+  // Jamaica — Port Royal (205,213) is E harbour
+  const jam = svgEl('path');
+  svgAttr(jam, {
+    d: 'M185,210 C193,203 206,201 218,203 C228,203 237,208 238,215 C232,222 218,224 204,222 C191,220 182,216 182,211 Z',
+    fill: lf, stroke: ls, 'stroke-width': 1.0, opacity: 0.90,
+  });
+  svg.appendChild(jam);
+
+  // Bahamas — Nassau (200,145) sits at centre
+  const bah = svgEl('path');
+  svgAttr(bah, {
+    d: 'M188,143 C195,137 206,135 217,137 C225,137 231,142 229,148 C223,153 211,154 199,152 C189,150 184,146 186,142 Z',
+    fill: lf, stroke: ls, 'stroke-width': 1.0, opacity: 0.85,
+  });
+  svg.appendChild(bah);
+
+  // Cape Verde island cluster (590,188)
+  ['M579,183 Q587,179 594,181 Q597,186 591,190 Q583,190 579,186 Z',
+   'M595,191 Q601,188 607,190 Q610,195 606,198 Q598,198 595,194 Z',
+   'M573,191 Q578,188 583,190 Q585,194 581,197 Q574,197 572,193 Z',
+  ].forEach(d => { const e = svgEl('path'); svgAttr(e, { d, fill: lf, stroke: ls, 'stroke-width': 0.8, opacity: 0.82 }); svg.appendChild(e); });
+
+  // Scattered decorative cays / shoals
+  ['M312,196 Q317,192 323,194 Q325,199 321,202 Q314,202 312,198 Z',
+   'M358,148 Q363,144 369,146 Q371,151 367,154 Q360,154 358,150 Z',
+   'M440,232 Q445,228 451,230 Q453,235 449,238 Q442,238 440,234 Z',
+   'M490,170 Q494,167 499,169 Q501,174 497,176 Q490,176 488,172 Z',
+   'M382,258 Q387,254 392,256 Q394,261 390,264 Q383,264 381,260 Z',
+  ].forEach(d => { const e = svgEl('path'); svgAttr(e, { d, fill: lf, stroke: ls, 'stroke-width': 0.7, opacity: 0.46 }); svg.appendChild(e); });
+
+  // ── Sea decorations ───────────────────────────────────────────────────────
+  // Sea serpent — coiled silhouette in upper mid-Atlantic
+  const serp = svgEl('path');
+  svgAttr(serp, {
+    d: 'M352,80 C357,68 370,64 380,70 C390,76 392,90 385,98 C378,106 365,106 357,99 C349,92 347,80 353,72 C358,65 368,62 377,66',
+    fill: 'none', stroke: '#3a5068', 'stroke-width': 2.2, 'stroke-linecap': 'round', opacity: 0.26,
+  });
+  svg.appendChild(serp);
+  const serpH = svgEl('ellipse');
+  svgAttr(serpH, { cx: 386, cy: 70, rx: 9, ry: 6, fill: '#8899aa', stroke: '#3a5068', 'stroke-width': 0.8, opacity: 0.24, transform: 'rotate(-25,386,70)' });
+  svg.appendChild(serpH);
+  // Serpent eye
+  const serpE = svgEl('circle'); svgAttr(serpE, { cx: 389, cy: 68, r: 1.5, fill: '#3a2808', opacity: 0.30 }); svg.appendChild(serpE);
+
+  // Whale — spouting leviathan in lower Atlantic
+  const whale = svgEl('path');
+  svgAttr(whale, {
+    d: 'M560,244 Q572,232 590,230 Q610,230 618,240 Q620,252 610,260 Q594,268 574,262 Q556,256 554,246 Q553,238 560,236 M614,242 Q624,232 630,228',
+    fill: '#8899aa', stroke: '#3a5068', 'stroke-width': 0.8, 'stroke-linejoin': 'round', opacity: 0.24,
+  });
+  svg.appendChild(whale);
+  const spout = svgEl('path');
+  svgAttr(spout, { d: 'M576,230 C572,218 576,210 581,216', fill: 'none', stroke: '#3a5068', 'stroke-width': 1.2, 'stroke-linecap': 'round', opacity: 0.20 });
+  svg.appendChild(spout);
+
+  // Galleon — small sailing ship mid-Atlantic
+  const hull = svgEl('path');
+  svgAttr(hull, { d: 'M447,148 Q454,154 461,148 L459,138 L449,138 Z', fill: '#c8a840', stroke: '#8b6914', 'stroke-width': 0.7, opacity: 0.26 });
+  svg.appendChild(hull);
+  const mast = svgEl('line'); svgAttr(mast, { x1: 454, y1: 138, x2: 454, y2: 122, stroke: '#6b4c10', 'stroke-width': 0.9, opacity: 0.26 }); svg.appendChild(mast);
+  const sail = svgEl('path');
+  svgAttr(sail, { d: 'M454,124 L444,134 L454,136 Z', fill: '#e8d890', stroke: '#8b6914', 'stroke-width': 0.5, opacity: 0.26 });
+  svg.appendChild(sail);
 
   // ── Routes ────────────────────────────────────────────────────────────────
   Object.values(ROUTES).forEach(route => {
@@ -512,10 +656,9 @@ function renderMap() {
     const routeState = state.routes[route.id];
 
     if (!routeState.unlocked) {
-      // Locked: ghost line only — no label, very faint
       const lockedLine = svgEl('line');
       svgAttr(lockedLine, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
-        stroke: '#4a6070', 'stroke-width': 1.0, 'stroke-dasharray': '2,13', opacity: 0.18 });
+        stroke: '#4a6070', 'stroke-width': 1.0, 'stroke-dasharray': '2,13', opacity: 0.20 });
       svg.appendChild(lockedLine);
       return;
     }
@@ -530,12 +673,11 @@ function renderMap() {
 
     const line = svgEl('line');
     svgAttr(line, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
-      stroke: color, 'stroke-width': isSel ? 3.5 : 2.2,
+      stroke: color, 'stroke-width': isSel ? 3.2 : 2.0,
       'stroke-dasharray': isSel ? '3,6' : '2,9',
-      'stroke-linecap': 'round', opacity: isSel ? 1.0 : 0.82 });
+      'stroke-linecap': 'round', opacity: isSel ? 1.0 : 0.72 });
     svg.appendChild(line);
 
-    // Wide transparent hit area for easy clicking
     const hit = svgEl('line');
     svgAttr(hit, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
       stroke: 'transparent', 'stroke-width': 24,
@@ -549,50 +691,79 @@ function renderMap() {
       svgText(svg, '⛵', mx, my + 4.5, { 'text-anchor': 'middle', 'font-size': 10 });
     }
     if (ready) {
-      // Parchment halo so "PRONTA" stays legible over the map image
       svgText(svg, '✓ PRONTA', mx, my - (active ? 16 : 5), {
-        'text-anchor': 'middle', 'font-size': 8.5, fill: '#3a6a48', 'font-weight': 'bold',
-        'font-family': 'Georgia, serif', 'letter-spacing': 0.8,
-        'paint-order': 'stroke fill', stroke: '#f0e8c4', 'stroke-width': 2.5, 'stroke-linejoin': 'round',
+        'text-anchor': 'middle', 'font-size': 8.5, fill: '#3a6a48',
+        'font-weight': 'bold', 'font-family': 'Georgia, serif', 'letter-spacing': 0.8,
       });
     }
   });
 
   // ── Port markers ──────────────────────────────────────────────────────────
-  // Label direction chosen per-port to avoid route-line and neighbour overlap.
   const PORT_LABEL = {
     boston:     { dx:  18, dy:   3, anchor: 'start'  },  // right
     charleston: { dx:  18, dy:   3, anchor: 'start'  },  // right
     nassau:     { dx:   0, dy: -16, anchor: 'middle' },   // above
     havana:     { dx:   0, dy:  21, anchor: 'middle' },   // below
-    tortuga:    { dx:  18, dy:   3, anchor: 'start'  },   // right
-    port_royal: { dx:  18, dy:   3, anchor: 'start'  },   // right
-    cape_verde: { dx:   0, dy: -16, anchor: 'middle' },   // above (near compass rose)
-    dakar:      { dx:  18, dy:   3, anchor: 'start'  },   // right
+    tortuga:    { dx:   0, dy: -16, anchor: 'middle' },   // above
+    port_royal: { dx:   0, dy:  21, anchor: 'middle' },   // below
+    cape_verde: { dx:   0, dy: -16, anchor: 'middle' },   // above
+    dakar:      { dx:  18, dy:   3, anchor: 'start'  },   // right (just off Africa coast)
   };
 
   Object.values(PORTS).forEach(port => {
     if (!state.unlockedPorts.includes(port.id)) return;
-
-    // Subtle halo ring
     const ring = svgEl('circle');
-    svgAttr(ring, { cx: port.x, cy: port.y, r: 12, fill: 'none', stroke: '#f0e8c4', 'stroke-width': 0.8, opacity: 0.30 });
+    svgAttr(ring, { cx: port.x, cy: port.y, r: 12, fill: 'none', stroke: '#2c1810', 'stroke-width': 0.7, opacity: 0.22 });
     svg.appendChild(ring);
-
-    // Port dot
     const c = svgEl('circle');
-    svgAttr(c, { cx: port.x, cy: port.y, r: 7, fill: '#f0e8c4', stroke: '#2c1810', 'stroke-width': 1.8 });
+    svgAttr(c, { cx: port.x, cy: port.y, r: 7, fill: '#f0e8c4', stroke: '#2c1810', 'stroke-width': 1.6 });
     svg.appendChild(c);
-
     svgText(svg, '⚓', port.x, port.y + 3.5, { 'text-anchor': 'middle', 'font-size': 7.5 });
-
-    // Port name with parchment stroke-halo for readability over busy background
     const lo = PORT_LABEL[port.id] || { dx: 0, dy: 21, anchor: 'middle' };
     svgText(svg, port.name.toUpperCase(), port.x + lo.dx, port.y + lo.dy, {
       'text-anchor': lo.anchor, 'font-size': 8.5, fill: '#1a0e08',
       'font-weight': 'bold', 'font-family': 'Georgia, serif', 'letter-spacing': 0.8,
-      'paint-order': 'stroke fill', stroke: '#f0e8c4', 'stroke-width': 3.0, 'stroke-linejoin': 'round',
     });
+  });
+
+  // ── Compass rose (bottom-right Atlantic, clear of Africa and Caribbean) ────
+  const ccx = 700, ccy = 248;
+  const cpBg = svgEl('circle'); svgAttr(cpBg, { cx: ccx, cy: ccy, r: 26, fill: '#f0e8c4', stroke: '#8b6914', 'stroke-width': 0.8, opacity: 0.82 }); svg.appendChild(cpBg);
+  const cpRing = svgEl('circle'); svgAttr(cpRing, { cx: ccx, cy: ccy, r: 30, fill: 'none', stroke: '#8b6914', 'stroke-width': 0.7, opacity: 0.42 }); svg.appendChild(cpRing);
+  [0, 45, 90, 135, 180, 225, 270, 315].forEach(deg => {
+    const isCard = deg % 90 === 0;
+    const rad = (deg - 90) * Math.PI / 180, perpR = rad + Math.PI / 2;
+    const tl = isCard ? 22 : 13, sw = isCard ? 5 : 3;
+    const tx = ccx + tl * Math.cos(rad), ty = ccy + tl * Math.sin(rad);
+    const s1x = ccx + sw * Math.cos(perpR), s1y = ccy + sw * Math.sin(perpR);
+    const s2x = ccx - sw * Math.cos(perpR), s2y = ccy - sw * Math.sin(perpR);
+    const poly = svgEl('polygon');
+    svgAttr(poly, {
+      points: `${tx.toFixed(1)},${ty.toFixed(1)} ${s1x.toFixed(1)},${s1y.toFixed(1)} ${ccx},${ccy} ${s2x.toFixed(1)},${s2y.toFixed(1)}`,
+      fill: deg === 0 ? '#8b2020' : (isCard ? '#2c1810' : '#f0e8c4'),
+      stroke: '#2c1810', 'stroke-width': 0.5, opacity: 0.88,
+    });
+    svg.appendChild(poly);
+  });
+  const cd1 = svgEl('circle'); svgAttr(cd1, { cx: ccx, cy: ccy, r: 3, fill: '#8b6914' }); svg.appendChild(cd1);
+  const cd2 = svgEl('circle'); svgAttr(cd2, { cx: ccx, cy: ccy, r: 1.2, fill: '#f0e8c4' }); svg.appendChild(cd2);
+  [['N',ccx,ccy-32],['S',ccx,ccy+38],['E',ccx+36,ccy+4],['W',ccx-33,ccy+4]].forEach(([lbl,lx,ly]) => {
+    svgText(svg, lbl, lx, ly, { 'text-anchor': 'middle', 'font-size': 8.5, 'font-weight': 'bold',
+      fill: lbl === 'N' ? '#8b2020' : '#1a0e08', 'font-family': 'Georgia, serif', opacity: 0.88 });
+  });
+
+  // ── Cartouche (centre-bottom Atlantic) ────────────────────────────────────
+  const cRect = svgEl('rect');
+  svgAttr(cRect, { x: 354, y: 268, width: 182, height: 22, rx: 2,
+    fill: '#f0e8c4', stroke: '#8b6914', 'stroke-width': 0.8, opacity: 0.82 });
+  svg.appendChild(cRect);
+  svgText(svg, 'OCEANUS ATLANTICUS', 445, 278, {
+    'text-anchor': 'middle', 'font-size': 7.5, fill: '#3a2808',
+    'font-family': 'Georgia, serif', 'font-style': 'italic', 'letter-spacing': 1.8,
+  });
+  svgText(svg, 'Anno Domini MDCCXVIII', 445, 286, {
+    'text-anchor': 'middle', 'font-size': 6.5, fill: '#5a3818',
+    'font-family': 'Georgia, serif', 'font-style': 'italic',
   });
 
   container.innerHTML = '';
