@@ -660,6 +660,15 @@ function renderMap() {
       svgAttr(lockedLine, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
         stroke: '#4a6070', 'stroke-width': 1.0, 'stroke-dasharray': '2,13', opacity: 0.20 });
       svg.appendChild(lockedLine);
+      // Lock icon at midpoint
+      const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+      svgText(svg, '🔒', mx, my + 4, { 'text-anchor': 'middle', 'font-size': 9, opacity: 0.45 });
+      // Clickable hit area — opens unlock info panel
+      const lockedHit = svgEl('line');
+      svgAttr(lockedHit, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
+        stroke: 'transparent', 'stroke-width': 24,
+        class: 'route-hit', 'data-route': route.id, cursor: 'pointer' });
+      svg.appendChild(lockedHit);
       return;
     }
 
@@ -815,6 +824,7 @@ function renderPanel() {
   if (!selectedRouteId)  { renderActiveMissionsPanel(container); return; }
   const route      = ROUTES[selectedRouteId];
   const routeState = state.routes[selectedRouteId];
+  if (!routeState.unlocked) { renderLockedRoutePanel(container, route); return; }
   const dl         = routeState.dangerLevel;
   const color      = DANGER_COLOR[dl];
   const dlabel     = DANGER_LABEL[dl];
@@ -836,6 +846,28 @@ function renderRouteOverview(container, route, dl, color, dlabel) {
   <p class="route-desc">${dangerDescText}</p>`;
 
   if (amList.length) html += `<div class="active-missions-list">${amList.map(activeMissionCardHtml).join('')}</div>`;
+
+  // ── Progression: what does completing this route unlock? ──────────────────
+  const unlocks = Object.entries(UNLOCK_CONDITIONS)
+    .filter(([, c]) => c.prereq === route.id);
+  if (unlocks.length) {
+    const done = (state.routes[route.id].missionsCompleted || 0);
+    html += `<div class="route-unlocks-section">
+      <div class="route-unlocks-title">🗝 Missioni completate su questa rotta: <strong>${done}</strong></div>`;
+    unlocks.forEach(([rid, cond]) => {
+      const pct      = Math.min(100, Math.round(done / cond.needed * 100));
+      const barColor = pct >= 100 ? '#4a7c59' : pct >= 50 ? '#b89a2a' : '#5a6878';
+      const isUnlocked = state.routes[rid].unlocked;
+      html += `<div class="route-unlock-item ${isUnlocked ? 'already-unlocked' : ''}">
+        <div class="route-unlock-row">
+          <span class="route-unlock-name">${isUnlocked ? '✅' : '🔒'} ${ROUTES[rid].label}</span>
+          <span class="route-unlock-req">${isUnlocked ? 'Sbloccata' : `${done}/${cond.needed}`}</span>
+        </div>
+        ${!isUnlocked ? `<div class="odds-bar-wrap"><div class="odds-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
 
   html += `<h4 class="missions-title">Missioni disponibili</h4>`;
   route.missions.forEach(m => {
@@ -969,6 +1001,44 @@ function renderMissionDetail(container, route, dl, color, dlabel) {
     }
     renderAll();
   });
+}
+
+function renderLockedRoutePanel(container, route) {
+  const cond       = UNLOCK_CONDITIONS[route.id];
+  const prereq     = ROUTES[cond.prereq];
+  const done       = state.routes[cond.prereq].missionsCompleted || 0;
+  const pct        = Math.min(100, Math.round(done / cond.needed * 100));
+  const barColor   = pct >= 100 ? '#4a7c59' : pct >= 50 ? '#b89a2a' : '#5a6878';
+  const remaining  = Math.max(0, cond.needed - done);
+
+  // What does THIS route unlock in turn?
+  const chain = Object.entries(UNLOCK_CONDITIONS)
+    .filter(([, c]) => c.prereq === route.id);
+
+  let chainHtml = '';
+  if (chain.length) {
+    chainHtml = `<div class="unlock-chain">
+      <div class="unlock-chain-title">🔗 Sblocca a sua volta</div>
+      ${chain.map(([rid]) => `<span class="unlock-chain-item">${ROUTES[rid].label}</span>`).join('')}
+    </div>`;
+  }
+
+  container.innerHTML = `
+    <div class="panel-route-header">
+      <h3>${route.label}</h3>
+      <span class="danger-badge" style="--dc:#5a6878">🔒 Bloccata</span>
+    </div>
+    <p class="route-desc">Rotta inesplorata. Guadagna esperienza sulle rotte note per aprire nuovi orizzonti commerciali.</p>
+    <div class="unlock-req-box">
+      <div class="unlock-req-title">🗺 Come sbloccare</div>
+      <div class="unlock-req-desc">Completa <strong>${cond.needed}</strong> missioni su
+        <strong>${prereq.label}</strong>${remaining > 0 ? ` (mancano ancora <strong>${remaining}</strong>)` : ' ✅'}</div>
+      <div class="odds-bar-wrap" style="margin-top:8px">
+        <div class="odds-bar-fill" style="width:${pct}%;background:${barColor}"></div>
+      </div>
+      <div class="unlock-progress-text" style="color:${barColor}">${done} / ${cond.needed} missioni completate</div>
+    </div>
+    ${chainHtml}`;
 }
 
 function renderBattleResult(container, battle) {
