@@ -24,6 +24,29 @@ const PORTS = {
 const DANGER_COLOR = { 0: '#3aaa60', 1: '#d4b030', 2: '#e07820', 3: '#cc2424' };
 const DANGER_LABEL = { 0: 'Verde', 1: 'Giallo', 2: 'Arancione', 3: 'Rosso' };
 
+// Quadratic bezier control points for each route — one unique arc per route so
+// overlapping routes in the Caribbean cluster are always visually separable.
+// Format: [cx, cy]  →  SVG path: M x1 y1 Q cx cy x2 y2
+// Bezier midpoint (t=0.5): bx = 0.25*x1 + 0.5*cx + 0.25*x2 (same for y)
+const ROUTE_CURVES = {
+  // Caribbean cluster — each edge of the diamond fans outward
+  nassau_havana:         [145, 138],  // NW arc, left of straight line
+  nassau_tortuga:        [236, 116],  // N  arc, above the cluster
+  havana_tortuga:        [200, 196],  // S  arc, through diamond interior
+  tortuga_port_royal:    [284, 192],  // E  arc, rightward bulge
+  havana_port_royal:     [128, 200],  // W  arc, leftward bulge
+  // American coast — upper and lower arcs diverge clearly
+  nassau_charleston:     [122,  86],  // N  arc (upper route to Charleston)
+  port_royal_charleston: [138, 202],  // S  arc (lower route to Charleston)
+  charleston_boston:     [ 38,  87],  // W  arc, hugs the coastline
+  // Atlantic — dramatic opposing arcs, clean visual X in mid-ocean
+  charleston_dakar:      [390,  42],  // grand N arc
+  port_royal_dakar:      [455, 278],  // deep  S arc
+  // West Africa
+  dakar_cape_verde:      [655, 162],  // slight N arc
+  cape_verde_nassau:     [390, 242],  // S arc (below the charleston_dakar arch)
+};
+
 const ROUTES = {
   // ── Caraibi (Zona 1) ────────────────────────────────────────────────────
   nassau_havana: {
@@ -655,25 +678,28 @@ function renderMap() {
     const p1 = PORTS[p1id], p2 = PORTS[p2id];
     const routeState = state.routes[route.id];
 
+    // Bezier control point and midpoint (t=0.5 on quadratic bezier)
+    const [cx, cy] = ROUTE_CURVES[route.id] || [(p1.x + p2.x) / 2, (p1.y + p2.y) / 2];
+    const mx = 0.25 * p1.x + 0.5 * cx + 0.25 * p2.x;
+    const my = 0.25 * p1.y + 0.5 * cy + 0.25 * p2.y;
+    const d  = `M ${p1.x} ${p1.y} Q ${cx} ${cy} ${p2.x} ${p2.y}`;
+
     if (!routeState.unlocked) {
-      const lockedLine = svgEl('line');
-      svgAttr(lockedLine, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
+      const lockedPath = svgEl('path');
+      svgAttr(lockedPath, { d, fill: 'none',
         stroke: '#4a6070', 'stroke-width': 1.8, 'stroke-dasharray': '3,12', opacity: 0.38 });
-      svg.appendChild(lockedLine);
-      // Lock icon at midpoint
-      const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+      svg.appendChild(lockedPath);
+      // Lock icon at bezier midpoint
       svgText(svg, '🔒', mx, my + 4, { 'text-anchor': 'middle', 'font-size': 9, opacity: 0.45 });
       // Clickable hit area — opens unlock info panel
-      const lockedHit = svgEl('line');
-      svgAttr(lockedHit, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
+      const lockedHit = svgEl('path');
+      svgAttr(lockedHit, { d, fill: 'none',
         stroke: 'transparent', 'stroke-width': 24,
         class: 'route-hit', 'data-route': route.id, cursor: 'pointer' });
       svg.appendChild(lockedHit);
       return;
     }
 
-    const mx    = (p1.x + p2.x) / 2;
-    const my    = (p1.y + p2.y) / 2;
     const dl    = routeState.dangerLevel;
     const color = DANGER_COLOR[dl];
     const isSel = route.id === selectedRouteId;
@@ -681,21 +707,21 @@ function renderMap() {
     const ready  = state.activeMissions.find(m => m.routeId === route.id && m.completesAt <= now);
 
     // Dark halo underneath for contrast against the sea
-    const halo = svgEl('line');
-    svgAttr(halo, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
+    const halo = svgEl('path');
+    svgAttr(halo, { d, fill: 'none',
       stroke: '#1a0e08', 'stroke-width': isSel ? 8.5 : 6.5,
       'stroke-linecap': 'round', opacity: 0.28 });
     svg.appendChild(halo);
 
-    const line = svgEl('line');
-    svgAttr(line, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
+    const line = svgEl('path');
+    svgAttr(line, { d, fill: 'none',
       stroke: color, 'stroke-width': isSel ? 5.0 : 3.5,
       'stroke-dasharray': isSel ? '9,5' : '8,7',
       'stroke-linecap': 'round', opacity: 1.0 });
     svg.appendChild(line);
 
-    const hit = svgEl('line');
-    svgAttr(hit, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
+    const hit = svgEl('path');
+    svgAttr(hit, { d, fill: 'none',
       stroke: 'transparent', 'stroke-width': 24,
       class: 'route-hit', 'data-route': route.id, cursor: 'pointer' });
     svg.appendChild(hit);
