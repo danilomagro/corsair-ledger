@@ -21,7 +21,7 @@ const PORTS = {
   cape_verde: { id: 'cape_verde', name: 'Capo Verde', x: 590, y: 188, desc: 'Isole atlantiche — crocevia dei mari' },
 };
 
-const DANGER_COLOR = { 0: '#4a7c59', 1: '#b89a2a', 2: '#c87428', 3: '#8b2020' };
+const DANGER_COLOR = { 0: '#3aaa60', 1: '#d4b030', 2: '#e07820', 3: '#cc2424' };
 const DANGER_LABEL = { 0: 'Verde', 1: 'Giallo', 2: 'Arancione', 3: 'Rosso' };
 
 const ROUTES = {
@@ -658,7 +658,7 @@ function renderMap() {
     if (!routeState.unlocked) {
       const lockedLine = svgEl('line');
       svgAttr(lockedLine, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
-        stroke: '#4a6070', 'stroke-width': 1.0, 'stroke-dasharray': '2,13', opacity: 0.20 });
+        stroke: '#4a6070', 'stroke-width': 1.8, 'stroke-dasharray': '3,12', opacity: 0.38 });
       svg.appendChild(lockedLine);
       // Lock icon at midpoint
       const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
@@ -680,11 +680,18 @@ function renderMap() {
     const active = state.activeMissions.some(m => m.routeId === route.id);
     const ready  = state.activeMissions.find(m => m.routeId === route.id && m.completesAt <= now);
 
+    // Dark halo underneath for contrast against the sea
+    const halo = svgEl('line');
+    svgAttr(halo, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
+      stroke: '#1a0e08', 'stroke-width': isSel ? 8.5 : 6.5,
+      'stroke-linecap': 'round', opacity: 0.28 });
+    svg.appendChild(halo);
+
     const line = svgEl('line');
     svgAttr(line, { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y,
-      stroke: color, 'stroke-width': isSel ? 3.2 : 2.0,
-      'stroke-dasharray': isSel ? '3,6' : '2,9',
-      'stroke-linecap': 'round', opacity: isSel ? 1.0 : 0.72 });
+      stroke: color, 'stroke-width': isSel ? 5.0 : 3.5,
+      'stroke-dasharray': isSel ? '9,5' : '8,7',
+      'stroke-linecap': 'round', opacity: 1.0 });
     svg.appendChild(line);
 
     const hit = svgEl('line');
