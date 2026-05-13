@@ -898,6 +898,156 @@ body {
   line-height: 1.5;
 }
 
+/* ─── Map zoom / pan ─────────────────────────────────────────────────────── */
+#map-container { cursor: grab; user-select: none; }
+#map-container.dragging { cursor: grabbing; }
+
+/* ─── Market panel ────────────────────────────────────────────────────────── */
+.market-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-lt);
+}
+.market-header h3 {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 14px;
+  color: var(--gold-dk);
+}
+.market-close { /* reuses .btn-back */ }
+.market-section-title {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 10.5px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 12px 0 6px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid var(--border-lt);
+}
+.market-buy-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+  gap: 6px;
+}
+.market-ship-card {
+  background: var(--parchment-lt);
+  border: 1px solid var(--border-lt);
+  border-radius: 5px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.market-ship-card.unaffordable { opacity: 0.55; }
+.market-ship-name {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.market-price {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--gold-dk);
+  font-family: 'Courier New', monospace;
+}
+.btn-buy-ship, .btn-sell-ship, .btn-buy-barrels {
+  font-size: 11px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--gold);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: 'Cinzel', Georgia, serif;
+}
+.btn-buy-ship:disabled, .btn-sell-ship:disabled, .btn-buy-barrels:disabled {
+  opacity: 0.5; cursor: not-allowed;
+}
+.btn-buy-ship:hover:not(:disabled),
+.btn-sell-ship:hover:not(:disabled),
+.btn-buy-barrels:hover:not(:disabled) { background: var(--gold-dk); color: var(--parchment-lt); }
+.market-sell-list { display: flex; flex-direction: column; gap: 5px; }
+.market-sell-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  background: var(--parchment-lt);
+  border: 1px solid var(--border-lt);
+  border-radius: 4px;
+  flex-wrap: wrap;
+}
+.market-sell-name {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  min-width: 80px;
+}
+.market-barrels-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  padding: 6px 8px;
+  background: var(--parchment-lt);
+  border: 1px solid var(--border-lt);
+  border-radius: 4px;
+}
+
+/* ─── Ship upgrade panel ──────────────────────────────────────────────────── */
+.upgrade-ship-badge { margin-bottom: 10px; }
+.upgrade-grid { display: flex; flex-direction: column; gap: 6px; }
+.upgrade-row {
+  display: grid;
+  grid-template-columns: 1fr 90px 60px auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--parchment-lt);
+  border: 1px solid var(--border-lt);
+  border-radius: 4px;
+}
+.upgrade-stat-label { font-size: 12px; font-weight: 600; color: var(--ink); }
+.upgrade-stat-val   { font-size: 11.5px; color: var(--ink-faint); font-family: 'Courier New', monospace; }
+.upgrade-stars      { font-size: 13px; color: var(--gold); letter-spacing: 1px; }
+.btn-do-upgrade {
+  font-size: 11px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: var(--gold);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: 'Cinzel', Georgia, serif;
+  white-space: nowrap;
+}
+.btn-do-upgrade:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-do-upgrade:hover:not(:disabled) { background: var(--gold-dk); color: var(--parchment-lt); }
+.upgrade-reales {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--ink-faint);
+  text-align: right;
+}
+.btn-upgrade-ship {
+  font-size: 10px;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--gold-dk);
+  cursor: pointer;
+  font-family: 'Cinzel', Georgia, serif;
+  margin-top: 3px;
+}
+.btn-upgrade-ship:hover { background: var(--gold); color: var(--ink); }
+
 /* ─── Scrollbar styling for panels ───────────────────────────────────────── */
 #fleet-panel::-webkit-scrollbar,
 #detail-panel::-webkit-scrollbar { width: 4px; }

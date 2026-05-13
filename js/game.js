@@ -50,6 +50,24 @@ const ROUTE_CURVES = {
   cape_verde_nassau:     [395, 267],  // S  arc  (chord-mid≈395,167 → ~100px S)
 };
 
+// ── Ship market buy/sell prices ───────────────────────────────────────────
+const SHIP_MARKET = {
+  gunboat:   { buyPrice:   600, sellPrice:  200 },
+  schooner:  { buyPrice:  1200, sellPrice:  400 },
+  brig:      { buyPrice:  2500, sellPrice:  900 },
+  frigate:   { buyPrice:  6000, sellPrice: 2200 },
+  man_o_war: { buyPrice: 12000, sellPrice: 4500 },
+};
+
+// ── Per-stat upgrade config (max SHIP_UPGRADE_MAX levels each) ────────────
+const SHIP_UPGRADE_MAX  = 3;
+const SHIP_UPGRADE_STAT = {
+  cargo:     { label: '📦 Cargo',    delta: 5, baseCost: 300 },
+  firepower: { label: '💥 Potenza',  delta: 4, baseCost: 500 },
+  hull:      { label: '🛡 Scafo',    delta: 4, baseCost: 400 },
+  speed:     { label: '💨 Velocità', delta: 1, baseCost: 450 },
+};
+
 const ROUTES = {
   // ── Caraibi (Zona 1) ────────────────────────────────────────────────────
   nassau_havana: {
@@ -181,21 +199,21 @@ const CAPTURED_NAMES = [
 
 // Route unlock prerequisites: complete N missions on the required route to unlock.
 const UNLOCK_CONDITIONS = {
-  // Caraibi → Caraibi
-  havana_tortuga:        { prereq: 'nassau_havana',        needed: 3 },
-  tortuga_port_royal:    { prereq: 'nassau_tortuga',       needed: 3 },
-  havana_port_royal:     { prereq: 'havana_tortuga',       needed: 3 },
-  // Caraibi → Costa Americana
-  nassau_charleston:     { prereq: 'havana_port_royal',    needed: 2 },
-  port_royal_charleston: { prereq: 'tortuga_port_royal',   needed: 4 },
+  // Caraibi → Caraibi (libere, solo missioni)
+  havana_tortuga:        { prereq: 'nassau_havana',         needed: 3 },
+  tortuga_port_royal:    { prereq: 'nassau_tortuga',        needed: 3 },
+  havana_port_royal:     { prereq: 'havana_tortuga',        needed: 3 },
+  // Caraibi → Costa Americana (costo di espansione)
+  nassau_charleston:     { prereq: 'havana_port_royal',     needed: 2, cost:   600 },
+  port_royal_charleston: { prereq: 'tortuga_port_royal',    needed: 4, cost:   800 },
   // Costa Americana → nord
-  charleston_boston:     { prereq: 'nassau_charleston',    needed: 3 },
-  // Traversata Atlantica
-  charleston_dakar:      { prereq: 'charleston_boston',    needed: 3 },
-  port_royal_dakar:      { prereq: 'port_royal_charleston', needed: 3 },
+  charleston_boston:     { prereq: 'nassau_charleston',     needed: 3, cost:  1200 },
+  // Traversata Atlantica (costosa)
+  charleston_dakar:      { prereq: 'charleston_boston',     needed: 3, cost:  4000 },
+  port_royal_dakar:      { prereq: 'port_royal_charleston', needed: 3, cost:  4000 },
   // Africa Occidentale
-  dakar_cape_verde:      { prereq: 'charleston_dakar',     needed: 1 },
-  cape_verde_nassau:     { prereq: 'dakar_cape_verde',     needed: 3 },
+  dakar_cape_verde:      { prereq: 'charleston_dakar',      needed: 1, cost:  1500 },
+  cape_verde_nassau:     { prereq: 'dakar_cape_verde',      needed: 3, cost:  2500 },
 };
 
 const INITIAL_STATE = {
@@ -262,6 +280,14 @@ function migrateSave() {
   });
   // Bump dock slots for old saves
   if (!state.dockSlots || state.dockSlots < 10) state.dockSlots = 10;
+  // Ensure ship upgrades exist
+  state.fleet.forEach(ship => {
+    if (!ship.upgrades) ship.upgrades = { cargo: 0, firepower: 0, hull: 0, speed: 0 };
+  });
+  // Ensure active missions have startedAt (fallback: 10 min before completesAt)
+  state.activeMissions.forEach(am => {
+    if (!am.startedAt) am.startedAt = am.completesAt - 600_000;
+  });
 }
 
 function saveState() {
@@ -306,11 +332,17 @@ function canAffordCargo(requiredCargo) {
   return Object.entries(requiredCargo).every(([t, a]) => (state.player.cargo[t] || 0) >= a);
 }
 
+// Returns a ship's effective stat value, including any upgrades applied.
+function getEffectiveStat(ship, stat) {
+  const base  = SHIP_TYPES[ship.type][stat];
+  const level = ship.upgrades?.[stat] || 0;
+  return base + level * (SHIP_UPGRADE_STAT[stat]?.delta || 0);
+}
+
 function fleetCombatPower(shipIds) {
   return shipIds.reduce((sum, id) => {
     const ship = state.fleet.find(s => s.id === id);
-    const st   = SHIP_TYPES[ship.type];
-    return sum + st.firepower + st.hull;
+    return sum + getEffectiveStat(ship, 'firepower') + getEffectiveStat(ship, 'hull');
   }, 0);
 }
 
@@ -325,7 +357,7 @@ function calcMissionMinutes(shipIds, baseMinutes) {
   if (!shipIds.length) return null;
   const avgSpeed = shipIds.reduce((s, id) => {
     const ship = state.fleet.find(sh => sh.id === id);
-    return s + SHIP_TYPES[ship.type].speed;
+    return s + getEffectiveStat(ship, 'speed');
   }, 0) / shipIds.length;
   return Math.max(1, Math.round(baseMinutes * (12 / avgSpeed)));
 }
@@ -362,7 +394,8 @@ function launchMission({ routeId, missionId, shipIds, fireBarrelsUsed }) {
   const completesAt = Date.now() + minutes * 60 * 1000;
 
   state.activeMissions.push({
-    id: `am_${Date.now()}`, routeId, missionId, shipIds, completesAt,
+    id: `am_${Date.now()}`, routeId, missionId, shipIds,
+    startedAt: Date.now(), completesAt,
     reward: mission.reward, missionName: mission.name, routeLabel: routeData.label,
   });
 
@@ -429,14 +462,16 @@ function collectMission(activeMissionId) {
 }
 
 function checkRouteUnlocks() {
-  Object.entries(UNLOCK_CONDITIONS).forEach(([routeId, { prereq, needed }]) => {
+  Object.entries(UNLOCK_CONDITIONS).forEach(([routeId, { prereq, needed, cost }]) => {
     const rs = state.routes[routeId];
     if (rs.unlocked) return;
     const done = state.routes[prereq]?.missionsCompleted || 0;
-    if (done >= needed) {
-      rs.unlocked = true;
-      addLog(`🗺 Nuova rotta sbloccata: ${ROUTES[routeId].label}!`);
-    }
+    if (done < needed) return;
+    if (cost && state.player.reales < cost) return; // missioni ok ma non abbastanza Reales
+    if (cost) state.player.reales -= cost;
+    rs.unlocked = true;
+    const costStr = cost ? ` (−${cost.toLocaleString('it-IT')} R)` : '';
+    addLog(`🗺 Nuova rotta sbloccata: ${ROUTES[routeId].label}!${costStr}`);
   });
 }
 
@@ -451,6 +486,60 @@ function repairShip(shipId) {
   state.player.gemmes -= cost;
   ship.status = 'docked'; ship.damage = 0;
   addLog(`🔧 ${ship.name} riparata per ${cost} ◆.`);
+  saveState();
+}
+
+// ─── MARKET & UPGRADE ACTIONS ────────────────────────────────────────────────
+
+function buyShip(typeId) {
+  const price = SHIP_MARKET[typeId]?.buyPrice;
+  if (!price) return;
+  if (state.player.reales < price) { addLog(`❌ Reales insufficienti per acquistare ${SHIP_TYPES[typeId].name}.`); return; }
+  if (state.fleet.length >= state.dockSlots) { addLog(`❌ Moli pieni — vendi o perde una nave prima.`); return; }
+  state.player.reales -= price;
+  const newShip = {
+    id: `ship_${Date.now()}`,
+    name: CAPTURED_NAMES[Math.floor(Math.random() * CAPTURED_NAMES.length)],
+    type: typeId, status: 'docked', damage: 0,
+    upgrades: { cargo: 0, firepower: 0, hull: 0, speed: 0 },
+  };
+  state.fleet.push(newShip);
+  addLog(`🏪 ${SHIP_TYPES[typeId].name} acquistata: ${newShip.name} (−${price.toLocaleString('it-IT')} R).`);
+  saveState();
+}
+
+function sellShip(shipId) {
+  const ship = state.fleet.find(s => s.id === shipId);
+  if (!ship || ship.status !== 'docked') return;
+  if (state.fleet.length <= 1) { addLog(`❌ Non puoi vendere l'ultima nave della flotta.`); return; }
+  const price = SHIP_MARKET[ship.type]?.sellPrice || 0;
+  state.fleet = state.fleet.filter(s => s.id !== shipId);
+  state.player.reales += price;
+  addLog(`🏪 ${ship.name} venduta per ${price.toLocaleString('it-IT')} R.`);
+  saveState();
+}
+
+function upgradeShip(shipId, stat) {
+  const ship = state.fleet.find(s => s.id === shipId);
+  if (!ship || ship.status !== 'docked') return;
+  if (!ship.upgrades) ship.upgrades = { cargo: 0, firepower: 0, hull: 0, speed: 0 };
+  const level = ship.upgrades[stat] || 0;
+  if (level >= SHIP_UPGRADE_MAX) return;
+  const cost = SHIP_UPGRADE_STAT[stat].baseCost * (level + 1);
+  if (state.player.reales < cost) { addLog(`❌ Reales insufficienti per upgrade (servono ${cost.toLocaleString('it-IT')} R).`); return; }
+  state.player.reales -= cost;
+  ship.upgrades[stat] = level + 1;
+  addLog(`⚙ ${ship.name}: ${SHIP_UPGRADE_STAT[stat].label} Liv.${level + 1} (−${cost.toLocaleString('it-IT')} R).`);
+  saveState();
+}
+
+function buyFireBarrels(qty) {
+  const costEach = 5; // Gemmes per barrel
+  const total = costEach * qty;
+  if (state.player.gemmes < total) { addLog(`❌ Gemmes insufficienti (servono ${total} ◆).`); return; }
+  state.player.gemmes -= total;
+  state.player.fireBarrels += qty;
+  addLog(`🔥 Acquistati ${qty} barili di fuoco (−${total} ◆).`);
   saveState();
 }
 
@@ -471,6 +560,20 @@ let selectedShipIds   = new Set();
 let fireBarrelsUsed   = 0;
 let lastBattleResult  = null;  // { outcome, routeLabel, damagedShip?, newDangerLabel? }
 let lastCaptureResult = null;  // { shipName, shipType } — set by collectMission
+let showMarket        = false; // market panel open
+let upgradeShipId     = null;  // upgrade panel for this ship id
+
+// ── Map zoom / pan state ──────────────────────────────────────────────────
+let mapView = { x: 0, y: 0, w: 880, h: 300 }; // current viewBox
+let mapDrag = null; // { startX, startY, startVX, startVY }
+
+function clampMapView() {
+  const MIN_W = 880 / 8, MIN_H = 300 / 8;
+  mapView.w = Math.max(MIN_W, Math.min(880, mapView.w));
+  mapView.h = mapView.w * 300 / 880;                       // keep aspect ratio
+  mapView.x = Math.max(0, Math.min(880 - mapView.w, mapView.x));
+  mapView.y = Math.max(0, Math.min(300 - mapView.h, mapView.y));
+}
 
 function setSelectedRoute(routeId) {
   selectedRouteId   = routeId;
@@ -482,7 +585,7 @@ function setSelectedRoute(routeId) {
 function clearSelection() {
   selectedRouteId = null; selectedMissionId = null;
   selectedShipIds.clear(); fireBarrelsUsed = 0;
-  lastCaptureResult = null;
+  lastCaptureResult = null; showMarket = false; upgradeShipId = null;
 }
 
 function renderAll() {
@@ -518,7 +621,8 @@ function renderMap() {
   const now       = Date.now();
   const svg       = svgEl('svg');
   // Wide viewBox: Americas left, Caribbean centre-left, Atlantic, Africa right.
-  svgAttr(svg, { viewBox: '0 0 880 300', id: 'map-svg', preserveAspectRatio: 'xMidYMid meet' });
+  const vb = `${mapView.x.toFixed(2)} ${mapView.y.toFixed(2)} ${mapView.w.toFixed(2)} ${mapView.h.toFixed(2)}`;
+  svgAttr(svg, { viewBox: vb, id: 'map-svg', preserveAspectRatio: 'xMidYMid meet' });
 
   // ── Defs ──────────────────────────────────────────────────────────────────
   const defs = svgEl('defs');
@@ -730,13 +834,31 @@ function renderMap() {
     svg.appendChild(hit);
 
     if (active) {
-      const pulse = svgEl('circle');
-      svgAttr(pulse, { cx: mx, cy: my, r: 8, fill: '#f0e8c4', stroke: color, 'stroke-width': 1.4, class: 'mission-pulse' });
-      svg.appendChild(pulse);
-      svgText(svg, '⛵', mx, my + 4.5, { 'text-anchor': 'middle', 'font-size': 10 });
+      // Animated ship: compute bezier position from mission progress
+      const am     = state.activeMissions.find(m => m.routeId === route.id);
+      const total  = am.completesAt - (am.startedAt ?? am.completesAt - 600_000);
+      const t      = Math.max(0, Math.min(1, (now - (am.startedAt ?? am.completesAt - 600_000)) / total));
+      const bx     = (1-t)*(1-t)*p1.x + 2*(1-t)*t*cx + t*t*p2.x;
+      const by     = (1-t)*(1-t)*p1.y + 2*(1-t)*t*cy + t*t*p2.y;
+      // Direction angle from bezier tangent
+      const tdx    = 2*(1-t)*(cx-p1.x) + 2*t*(p2.x-cx);
+      const tdy    = 2*(1-t)*(cy-p1.y) + 2*t*(p2.y-cy);
+      const angle  = Math.atan2(tdy, tdx) * 180 / Math.PI;
+      const shipG  = svgEl('g');
+      svgAttr(shipG, { transform: `translate(${bx.toFixed(1)},${by.toFixed(1)})` });
+      const shipBg = svgEl('circle');
+      svgAttr(shipBg, { r: 9, fill: '#f0e8c4', stroke: color, 'stroke-width': 1.5, class: 'mission-pulse' });
+      shipG.appendChild(shipBg);
+      // Ship emoji doesn't rotate (looks odd); show direction via a tiny arrow instead
+      const shipTxt = svgEl('text');
+      svgAttr(shipTxt, { 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 10 });
+      shipTxt.textContent = '⛵';
+      shipG.appendChild(shipTxt);
+      svg.appendChild(shipG);
     }
     if (ready) {
-      svgText(svg, '✓ PRONTA', mx, my - (active ? 16 : 5), {
+      const am = state.activeMissions.find(m => m.routeId === route.id && m.completesAt <= now);
+      svgText(svg, '✓ PRONTA', p2.x, p2.y - 14, {
         'text-anchor': 'middle', 'font-size': 8.5, fill: '#3a6a48',
         'font-weight': 'bold', 'font-family': 'Georgia, serif', 'letter-spacing': 0.8,
       });
@@ -844,11 +966,19 @@ function renderFleet() {
       <div class="ship-status ${cls}">${lbl}</div>
       ${ship.status === 'damaged'
         ? `<button class="btn-repair" data-ship="${ship.id}">🔧 Ripara (${st.repairCost} ◆)</button>`
-        : ''}
+        : ship.status === 'docked'
+          ? `<button class="btn-upgrade-ship" data-ship="${ship.id}">⚙ Upgrade</button>`
+          : ''}
     </div>`;
   }).join('');
   container.querySelectorAll('.btn-repair').forEach(btn => {
     btn.addEventListener('click', () => { repairShip(btn.dataset.ship); renderAll(); });
+  });
+  container.querySelectorAll('.btn-upgrade-ship').forEach(btn => {
+    btn.addEventListener('click', () => {
+      upgradeShipId = btn.dataset.ship; showMarket = false; selectedRouteId = null;
+      renderAll();
+    });
   });
 }
 
@@ -857,6 +987,8 @@ function renderPanel() {
   if (!container) return;
   if (lastBattleResult)  { renderBattleResult(container, lastBattleResult); return; }
   if (lastCaptureResult) { renderCaptureResult(container, lastCaptureResult); return; }
+  if (upgradeShipId)     { renderShipUpgradePanel(container, state.fleet.find(s => s.id === upgradeShipId)); return; }
+  if (showMarket)        { renderMarket(container); return; }
   if (!selectedRouteId)  { renderActiveMissionsPanel(container); return; }
   const route      = ROUTES[selectedRouteId];
   const routeState = state.routes[selectedRouteId];
@@ -1068,13 +1200,132 @@ function renderLockedRoutePanel(container, route) {
     <div class="unlock-req-box">
       <div class="unlock-req-title">🗺 Come sbloccare</div>
       <div class="unlock-req-desc">Completa <strong>${cond.needed}</strong> missioni su
-        <strong>${prereq.label}</strong>${remaining > 0 ? ` (mancano ancora <strong>${remaining}</strong>)` : ' ✅'}</div>
+        <strong>${prereq.label}</strong>${remaining > 0 ? ` (mancano ancora <strong>${remaining}</strong>)` : ' ✅'}
+        ${cond.cost ? `<br>+ <strong>${cond.cost.toLocaleString('it-IT')} R</strong> di spesa navale
+          <span class="${state.player.reales >= cond.cost ? 'ok' : 'err'}">(hai ${state.player.reales.toLocaleString('it-IT')} R)</span>` : ''}</div>
       <div class="odds-bar-wrap" style="margin-top:8px">
         <div class="odds-bar-fill" style="width:${pct}%;background:${barColor}"></div>
       </div>
       <div class="unlock-progress-text" style="color:${barColor}">${done} / ${cond.needed} missioni completate</div>
     </div>
     ${chainHtml}`;
+}
+
+function renderMarket(container) {
+  const canBuy  = (typeId) => state.player.reales >= SHIP_MARKET[typeId].buyPrice && state.fleet.length < state.dockSlots;
+  const canSell = (ship)   => ship.status === 'docked' && state.fleet.length > 1;
+
+  let html = `<div class="market-header">
+    <h3>🏪 Cantiere Navale</h3>
+    <button class="btn-back market-close">✕ Chiudi</button>
+  </div>
+
+  <h4 class="market-section-title">Acquista nave</h4>
+  <div class="market-buy-grid">`;
+
+  Object.entries(SHIP_TYPES).forEach(([typeId, st]) => {
+    const m   = SHIP_MARKET[typeId];
+    const ok  = canBuy(typeId);
+    html += `<div class="market-ship-card ${ok ? '' : 'unaffordable'}">
+      <div class="market-ship-name">${st.name}</div>
+      <div class="ship-stats">
+        <span title="Cargo">📦 ${st.cargo}</span>
+        <span title="Firepower">💥 ${st.firepower}</span>
+        <span title="Hull">🛡 ${st.hull}</span>
+        <span title="Speed">💨 ${st.speed}</span>
+      </div>
+      <div class="market-price">⚜ ${m.buyPrice.toLocaleString('it-IT')} R</div>
+      <button class="btn-buy-ship" data-type="${typeId}" ${ok ? '' : 'disabled'}>
+        ${state.fleet.length >= state.dockSlots ? '🚫 Moli pieni' : ok ? 'Acquista' : '⚠ Fondi insufficienti'}
+      </button>
+    </div>`;
+  });
+  html += `</div>
+
+  <h4 class="market-section-title">Vendi nave</h4>
+  <div class="market-sell-list">`;
+
+  const docked = state.fleet.filter(s => s.status === 'docked');
+  if (!docked.length) {
+    html += `<p class="no-ships">Nessuna nave ormeggiata disponibile per la vendita.</p>`;
+  } else {
+    docked.forEach(ship => {
+      const m = SHIP_MARKET[ship.type];
+      const ok = canSell(ship);
+      html += `<div class="market-sell-row">
+        <span class="market-sell-name">${ship.name}</span>
+        <span class="ship-type-badge">${SHIP_TYPES[ship.type].name}</span>
+        <span class="market-price">⚜ +${m.sellPrice.toLocaleString('it-IT')} R</span>
+        <button class="btn-sell-ship" data-ship="${ship.id}" ${ok ? '' : 'disabled'}>
+          ${ok ? 'Vendi' : 'Ultima nave'}
+        </button>
+      </div>`;
+    });
+  }
+
+  html += `</div>
+  <h4 class="market-section-title">🔥 Rifornimenti</h4>
+  <div class="market-barrels-row">
+    <span>Fire Barrel — <strong>5 ◆</strong> cad.</span>
+    <span class="fb-stock">Hai ${state.player.fireBarrels} barili · ${state.player.gemmes} ◆</span>
+    <button class="btn-buy-barrels" data-qty="1" ${state.player.gemmes >= 5 ? '' : 'disabled'}>+1</button>
+    <button class="btn-buy-barrels" data-qty="3" ${state.player.gemmes >= 15 ? '' : 'disabled'}>+3</button>
+    <button class="btn-buy-barrels" data-qty="5" ${state.player.gemmes >= 25 ? '' : 'disabled'}>+5</button>
+  </div>`;
+
+  container.innerHTML = html;
+  container.querySelector('.market-close').addEventListener('click', () => { showMarket = false; renderAll(); });
+  container.querySelectorAll('.btn-buy-ship').forEach(btn => {
+    btn.addEventListener('click', () => { buyShip(btn.dataset.type); renderAll(); });
+  });
+  container.querySelectorAll('.btn-sell-ship').forEach(btn => {
+    btn.addEventListener('click', () => { sellShip(btn.dataset.ship); renderAll(); });
+  });
+  container.querySelectorAll('.btn-buy-barrels').forEach(btn => {
+    btn.addEventListener('click', () => { buyFireBarrels(Number(btn.dataset.qty)); renderAll(); });
+  });
+}
+
+function renderShipUpgradePanel(container, ship) {
+  if (!ship) { upgradeShipId = null; renderPanel(); return; }
+  const st = SHIP_TYPES[ship.type];
+  if (!ship.upgrades) ship.upgrades = { cargo: 0, firepower: 0, hull: 0, speed: 0 };
+
+  let html = `<div class="market-header">
+    <h3>⚙ Upgrade — ${ship.name}</h3>
+    <button class="btn-back upgrade-close">✕ Chiudi</button>
+  </div>
+  <div class="upgrade-ship-badge"><span class="ship-type-badge">${st.name}</span></div>
+  <div class="upgrade-grid">`;
+
+  Object.entries(SHIP_UPGRADE_STAT).forEach(([stat, cfg]) => {
+    const level    = ship.upgrades[stat] || 0;
+    const maxed    = level >= SHIP_UPGRADE_MAX;
+    const cost     = cfg.baseCost * (level + 1);
+    const baseVal  = st[stat];
+    const currVal  = baseVal + level * cfg.delta;
+    const nextVal  = baseVal + (level + 1) * cfg.delta;
+    const canAfford = state.player.reales >= cost;
+
+    html += `<div class="upgrade-row">
+      <div class="upgrade-stat-label">${cfg.label}</div>
+      <div class="upgrade-stat-val">${currVal}${!maxed ? ` → <strong>${nextVal}</strong>` : ' ★ MAX'}</div>
+      <div class="upgrade-stars">${'★'.repeat(level)}${'☆'.repeat(SHIP_UPGRADE_MAX - level)}</div>
+      <button class="btn-do-upgrade" data-ship="${ship.id}" data-stat="${stat}"
+        ${maxed || !canAfford ? 'disabled' : ''}>
+        ${maxed ? 'MAX' : canAfford ? `${cost.toLocaleString('it-IT')} R` : `⚠ ${cost.toLocaleString('it-IT')} R`}
+      </button>
+    </div>`;
+  });
+
+  html += `</div>
+  <div class="upgrade-reales">⚜ Reales disponibili: <strong>${state.player.reales.toLocaleString('it-IT')}</strong></div>`;
+
+  container.innerHTML = html;
+  container.querySelector('.upgrade-close').addEventListener('click', () => { upgradeShipId = null; renderAll(); });
+  container.querySelectorAll('.btn-do-upgrade').forEach(btn => {
+    btn.addEventListener('click', () => { upgradeShip(btn.dataset.ship, btn.dataset.stat); renderAll(); });
+  });
 }
 
 function renderBattleResult(container, battle) {
@@ -1201,4 +1452,82 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-close-log').addEventListener('click', () => {
     logPanel.classList.add('hidden');
   });
+
+  document.getElementById('btn-market').addEventListener('click', () => {
+    showMarket = !showMarket;
+    if (showMarket) { upgradeShipId = null; selectedRouteId = null; }
+    renderAll();
+  });
+
+  // ── Map zoom / pan ─────────────────────────────────────────────────────────
+  const mapContainer = document.getElementById('map-container');
+
+  mapContainer.addEventListener('wheel', e => {
+    e.preventDefault();
+    const rect   = mapContainer.getBoundingClientRect();
+    const svgX   = (e.clientX - rect.left) / rect.width  * mapView.w + mapView.x;
+    const svgY   = (e.clientY - rect.top)  / rect.height * mapView.h + mapView.y;
+    const factor = e.deltaY < 0 ? 0.8 : 1.25;
+    mapView.w *= factor;
+    mapView.h  = mapView.w * 300 / 880;
+    mapView.x  = svgX - (e.clientX - rect.left) / rect.width  * mapView.w;
+    mapView.y  = svgY - (e.clientY - rect.top)  / rect.height * mapView.h;
+    clampMapView();
+    renderMap();
+  }, { passive: false });
+
+  mapContainer.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    mapDrag = { startX: e.clientX, startY: e.clientY, startVX: mapView.x, startVY: mapView.y };
+    mapContainer.classList.add('dragging');
+  });
+  window.addEventListener('mousemove', e => {
+    if (!mapDrag) return;
+    const rect = mapContainer.getBoundingClientRect();
+    mapView.x  = mapDrag.startVX - (e.clientX - mapDrag.startX) / rect.width  * mapView.w;
+    mapView.y  = mapDrag.startVY - (e.clientY - mapDrag.startY) / rect.height * mapView.h;
+    clampMapView();
+    renderMap();
+  });
+  window.addEventListener('mouseup', () => {
+    mapDrag = null;
+    mapContainer.classList.remove('dragging');
+  });
+
+  // Double-click resets zoom/pan
+  mapContainer.addEventListener('dblclick', () => {
+    mapView = { x: 0, y: 0, w: 880, h: 300 };
+    renderMap();
+  });
+
+  // Touch support (pinch-zoom + pan)
+  let lastTouches = null;
+  mapContainer.addEventListener('touchstart', e => {
+    lastTouches = Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY }));
+  }, { passive: true });
+  mapContainer.addEventListener('touchmove', e => {
+    e.preventDefault();
+    const touches = Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY }));
+    const rect    = mapContainer.getBoundingClientRect();
+    if (touches.length === 1 && lastTouches?.length === 1) {
+      const dx = (touches[0].x - lastTouches[0].x) / rect.width  * mapView.w;
+      const dy = (touches[0].y - lastTouches[0].y) / rect.height * mapView.h;
+      mapView.x -= dx; mapView.y -= dy;
+    } else if (touches.length === 2 && lastTouches?.length === 2) {
+      const prevDist = Math.hypot(lastTouches[1].x - lastTouches[0].x, lastTouches[1].y - lastTouches[0].y);
+      const currDist = Math.hypot(touches[1].x - touches[0].x, touches[1].y - touches[0].y);
+      const factor   = prevDist / currDist;
+      const cx       = (touches[0].x + touches[1].x) / 2;
+      const cy       = (touches[0].y + touches[1].y) / 2;
+      const svgX     = (cx - rect.left) / rect.width  * mapView.w + mapView.x;
+      const svgY     = (cy - rect.top)  / rect.height * mapView.h + mapView.y;
+      mapView.w *= factor; mapView.h = mapView.w * 300 / 880;
+      mapView.x  = svgX - (cx - rect.left) / rect.width  * mapView.w;
+      mapView.y  = svgY - (cy - rect.top)  / rect.height * mapView.h;
+    }
+    clampMapView();
+    renderMap();
+    lastTouches = touches;
+  }, { passive: false });
+  mapContainer.addEventListener('touchend', () => { lastTouches = null; });
 });
