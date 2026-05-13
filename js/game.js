@@ -28,23 +28,26 @@ const DANGER_LABEL = { 0: 'Verde', 1: 'Giallo', 2: 'Arancione', 3: 'Rosso' };
 // overlapping routes in the Caribbean cluster are always visually separable.
 // Format: [cx, cy]  →  SVG path: M x1 y1 Q cx cy x2 y2
 // Bezier midpoint (t=0.5): bx = 0.25*x1 + 0.5*cx + 0.25*x2 (same for y)
+// Control points redesigned for ~100px distance from chord midpoint (≈50px visual
+// deviation). Opposite perpendicular directions on parallel/adjacent routes.
+// Bezier deviation = 0.5 × dist(Pc, chord_midpoint).
 const ROUTE_CURVES = {
-  // Caribbean cluster — each edge of the diamond fans outward
-  nassau_havana:         [145, 138],  // NW arc, left of straight line
-  nassau_tortuga:        [236, 116],  // N  arc, above the cluster
-  havana_tortuga:        [200, 196],  // S  arc, through diamond interior
-  tortuga_port_royal:    [284, 192],  // E  arc, rightward bulge
-  havana_port_royal:     [128, 200],  // W  arc, leftward bulge
-  // American coast — upper and lower arcs diverge clearly
-  nassau_charleston:     [122,  86],  // N  arc (upper route to Charleston)
-  port_royal_charleston: [138, 202],  // S  arc (lower route to Charleston)
-  charleston_boston:     [ 38,  87],  // W  arc, hugs the coastline
-  // Atlantic — dramatic opposing arcs, clean visual X in mid-ocean
-  charleston_dakar:      [390,  42],  // grand N arc
-  port_royal_dakar:      [455, 278],  // deep  S arc
+  // Caribbean cluster — each edge fans hard outward from the diamond
+  nassau_havana:         [123,  75],  // NW arc  (chord-mid≈176,160 → ~100px NW)
+  nassau_tortuga:        [225,  54],  // N  arc  (chord-mid≈225,154 → ~100px N)
+  havana_tortuga:        [265, 265],  // SE arc  (chord-mid≈201,169 → ~115px SE, clears PortRoyal)
+  tortuga_port_royal:    [328, 188],  // E  arc  (chord-mid≈228,188 → ~100px E)
+  havana_port_royal:     [ 78, 194],  // W  arc  (chord-mid≈179,194 → ~101px W)
+  // American coast — upper N arc vs deep S arc, ~134px separation at midpoints
+  nassau_charleston:     [137,  30],  // N  arc  (chord-mid≈138,130 → ~100px N)
+  port_royal_charleston: [140, 264],  // S  arc  (chord-mid≈140,164 → ~100px S)
+  charleston_boston:     [  2,  87],  // W  arc  (coastal hug)
+  // Atlantic — opposing arcs form a clear X, ~126px vertical separation at centre
+  charleston_dakar:      [395,  28],  // grand N arc  (chord-mid≈398,154 → ~126px N)
+  port_royal_dakar:      [460, 295],  // deep  S arc  (chord-mid≈463,203 →  ~93px S)
   // West Africa
-  dakar_cape_verde:      [655, 162],  // slight N arc
-  cape_verde_nassau:     [390, 242],  // S arc (below the charleston_dakar arch)
+  dakar_cape_verde:      [655, 110],  // N  arc  (chord-mid≈655,190 →  ~80px N)
+  cape_verde_nassau:     [395, 267],  // S  arc  (chord-mid≈395,167 → ~100px S)
 };
 
 const ROUTES = {
