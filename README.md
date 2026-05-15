@@ -49,11 +49,9 @@ Works via `file://` — no server needed.
 
 ---
 
-## Screenshots
+## Screenshot
 
-| Map overview | Route detail | Market |
-|---|---|---|
-| *(screenshot)* | *(screenshot)* | *(screenshot)* |
+![Corsair Ledger — full UI](assets/preview.png)
 
 ---
 
