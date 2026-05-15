@@ -898,6 +898,123 @@ body {
   line-height: 1.5;
 }
 
+/* ─── Header controls (lang toggle + help) ───────────────────────────────── */
+#header-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.btn-header-ctrl {
+  background: transparent;
+  border: 1px solid var(--gold-dk);
+  color: var(--parchment-dk);
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.btn-header-ctrl:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: #ffffff0a;
+}
+
+/* ─── Help / Manual overlay ──────────────────────────────────────────────── */
+#help-panel {
+  position: fixed;
+  top: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(680px, 94vw);
+  max-height: calc(100vh - 100px);
+  background: var(--ink);
+  border: 2px solid var(--gold-dk);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  z-index: 200;
+  box-shadow: 0 8px 32px #00000066;
+}
+
+#help-panel.hidden { display: none; }
+
+#help-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--gold-dk);
+  color: var(--gold);
+  font-family: 'Cinzel', Georgia, serif;
+  letter-spacing: 2px;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+#btn-close-help {
+  background: transparent;
+  border: none;
+  color: var(--ink-faint);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 2px;
+  transition: color 0.1s;
+}
+
+#btn-close-help:hover { color: var(--parchment); }
+
+#help-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+#help-content::-webkit-scrollbar { width: 4px; }
+#help-content::-webkit-scrollbar-track { background: transparent; }
+#help-content::-webkit-scrollbar-thumb { background: var(--gold-dk); border-radius: 2px; }
+
+.help-section {
+  border-bottom: 1px solid #ffffff0f;
+  padding-bottom: 12px;
+}
+
+.help-section:last-child { border-bottom: none; }
+
+.help-section h3 {
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 12px;
+  color: var(--gold);
+  letter-spacing: 1.5px;
+  margin-bottom: 6px;
+}
+
+.help-section p, .help-section li {
+  font-size: 12px;
+  color: var(--parchment-dk);
+  line-height: 1.6;
+  margin-bottom: 4px;
+}
+
+.help-section ul {
+  list-style: none;
+  padding-left: 4px;
+}
+
+.help-section ul li::before {
+  content: '· ';
+  color: var(--gold);
+}
+
 /* ─── Map zoom / pan ─────────────────────────────────────────────────────── */
 #map-container { cursor: grab; user-select: none; }
 #map-container.dragging { cursor: grabbing; }

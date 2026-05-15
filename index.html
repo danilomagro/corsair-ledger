@@ -4,6 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Corsair Ledger</title>
+
+  <!-- SEO & Social -->
+  <meta name="description" content="Corsair Ledger — a browser mini-game inspired by Kenway's Fleet from Assassin's Creed: Black Flag. Manage trade routes, build your fleet, and conquer the Atlantic. No install, no login.">
+
+  <!-- Open Graph (LinkedIn / Facebook) -->
+  <meta property="og:type"        content="website">
+  <meta property="og:title"       content="Corsair Ledger — Kenway's Fleet, standalone">
+  <meta property="og:description" content="Manage trade routes, build your fleet, and conquer the Atlantic. A free browser mini-game inspired by AC: Black Flag. No install required.">
+  <meta property="og:image"       content="https://raw.githubusercontent.com/danilomagro/corsair-ledger/main/assets/preview.png">
+  <meta property="og:url"         content="https://danilomagro.github.io/corsair-ledger/">
+  <meta property="og:site_name"   content="Corsair Ledger">
+
+  <!-- Twitter / X Card -->
+  <meta name="twitter:card"        content="summary_large_image">
+  <meta name="twitter:title"       content="Corsair Ledger — Kenway's Fleet, standalone">
+  <meta name="twitter:description" content="Free browser mini-game inspired by AC: Black Flag. Manage routes, grow your fleet, conquer the Atlantic.">
+  <meta name="twitter:image"       content="https://raw.githubusercontent.com/danilomagro/corsair-ledger/main/assets/preview.png">
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -24,8 +42,12 @@
       <span class="resource">
         <span class="res-icon">🔥</span>
         <span id="res-barrels">0</span>
-        <span class="res-label">Barili</span>
+        <span id="res-barrels-label" class="res-label">Barili</span>
       </span>
+    </div>
+    <div id="header-controls">
+      <button id="btn-lang"  class="btn-header-ctrl">🇬🇧 EN</button>
+      <button id="btn-help"  class="btn-header-ctrl">?</button>
     </div>
   </header>
 
@@ -33,14 +55,14 @@
 
     <section id="map-section">
       <div id="map-container">
-        <!-- SVG injected by render.js -->
+        <!-- SVG injected by game.js -->
       </div>
     </section>
 
     <section id="bottom-section">
 
       <div id="fleet-panel">
-        <h2 class="panel-title">FLOTTA</h2>
+        <h2 id="fleet-title" class="panel-title">FLOTTA</h2>
         <div id="fleet-list"></div>
       </div>
 
@@ -65,7 +87,7 @@
     <div id="inventory-display"></div>
     <div id="footer-right">
       <button id="btn-market" class="btn-footer">🏪 Mercato</button>
-      <button id="btn-log" class="btn-footer">📜 Log</button>
+      <button id="btn-log"    class="btn-footer">📜 Log</button>
     </div>
   </footer>
 
@@ -76,6 +98,75 @@
       <button id="btn-close-log">✕</button>
     </div>
     <div id="log-content"></div>
+  </div>
+
+  <!-- Help / Manual overlay -->
+  <div id="help-panel" class="hidden">
+    <div id="help-header">
+      <span id="help-title">📖 Manuale</span>
+      <button id="btn-close-help">✕</button>
+    </div>
+    <div id="help-content">
+
+      <div class="help-section">
+        <h3>🗺 Mappa / Map</h3>
+        <p><strong>IT:</strong> Scorri con la rotella per zoomare. Trascina per spostarti. Doppio click per resettare la vista. Clicca su una rotta colorata per selezionarla.</p>
+        <p><strong>EN:</strong> Scroll to zoom. Drag to pan. Double-click to reset. Click a coloured route to select it.</p>
+      </div>
+
+      <div class="help-section">
+        <h3>🔒 Rotte / Routes</h3>
+        <p><strong>IT:</strong> Le rotte si sbloccano completando missioni sui percorsi prerequisiti (e a volte pagando Reales). Il colore indica il livello di pericolo: 🟢 Verde → 🟡 Giallo → 🟠 Arancione → 🔴 Rosso. Vincere battaglie abbassa il pericolo.</p>
+        <p><strong>EN:</strong> Routes unlock by completing missions on prerequisite routes (sometimes paying Reales too). Colour = danger level: 🟢 Safe → 🟡 Caution → 🟠 Dangerous → 🔴 Warzone. Winning battles reduces danger.</p>
+      </div>
+
+      <div class="help-section">
+        <h3>⛵ Missioni / Missions</h3>
+        <p><strong>IT:</strong> Seleziona una rotta → scegli una missione → assegna le navi → lancia. Le navi veloci riducono il tempo di viaggio. Alcune missioni richiedono cargo (Tabacco, Vino, Cacao). Le missioni completate avanzano nella barra progressi e sbloccano nuove rotte.</p>
+        <p><strong>EN:</strong> Select route → pick mission → assign ships → launch. Faster ships shorten travel time. Some missions require cargo (Tobacco, Wine, Cocoa). Completed missions advance the progress bar and unlock new routes.</p>
+      </div>
+
+      <div class="help-section">
+        <h3>⚔ Combattimento / Combat</h3>
+        <p><strong>IT:</strong> Sulle rotte pericolose si combatte prima di partire. La probabilità di vittoria dipende dalla potenza della flotta (💥 Potenza + 🛡 Scafo) vs la forza nemica. Usa i 🔥 Fire Barrel per +12 potenza ciascuno. Sconfitta = nave danneggiata, missione annullata.</p>
+        <p><strong>EN:</strong> Dangerous routes trigger combat before departure. Victory chance = fleet power (💥 Firepower + 🛡 Hull) vs enemy strength. Use 🔥 Fire Barrels for +12 power each. Defeat = ship damaged, mission cancelled.</p>
+      </div>
+
+      <div class="help-section">
+        <h3>⚓ Cattura navi / Ship capture</h3>
+        <p><strong>IT:</strong> Alcune rotte hanno una probabilità di catturare una nave nemica al completamento della missione. La nave catturata entra nella tua flotta (se c'è spazio nel porto).</p>
+        <p><strong>EN:</strong> Some routes have a chance to capture an enemy ship on mission completion. The captured ship joins your fleet (if dock space is available).</p>
+      </div>
+
+      <div class="help-section">
+        <h3>🏪 Mercato / Market</h3>
+        <p><strong>IT:</strong> Acquista/vendi navi con Reales. Tipi disponibili: Gunboat, Schooner, Brig, Fregata, Man O'War — velocità vs potenza di fuoco vs capacità di carico. Acquista Fire Barrel con Gemmes (5 ◆ cad.).</p>
+        <p><strong>EN:</strong> Buy/sell ships with Reales. Types: Gunboat, Schooner, Brig, Frigate, Man O'War — speed vs firepower vs cargo. Buy Fire Barrels with Gems (5 ◆ each).</p>
+      </div>
+
+      <div class="help-section">
+        <h3>⚙ Upgrade</h3>
+        <p><strong>IT:</strong> Clicca ⚙ su una nave ormeggiata per potenziare fino a 3 livelli ciascuno: 📦 Cargo, 💥 Potenza, 🛡 Scafo, 💨 Velocità. Il costo aumenta ad ogni livello.</p>
+        <p><strong>EN:</strong> Click ⚙ on a docked ship to upgrade up to 3 levels each: 📦 Cargo, 💥 Firepower, 🛡 Hull, 💨 Speed. Cost increases per level.</p>
+      </div>
+
+      <div class="help-section">
+        <h3>💰 Risorse / Resources</h3>
+        <ul>
+          <li><strong>⚜ Reales</strong> — moneta principale / main currency</li>
+          <li><strong>◆ Gemmes</strong> — riparazione navi e Fire Barrel / ship repair &amp; Fire Barrels</li>
+          <li><strong>🔥 Fire Barrel</strong> — bonus potenza in combattimento / combat power bonus</li>
+          <li><strong>Cargo</strong> — Tabacco/Tobacco · Vino/Wine · Cacao/Cocoa — richiesto da alcune missioni / required by some missions</li>
+        </ul>
+      </div>
+
+      <div class="help-section">
+        <h3>💾 Salvataggio / Save</h3>
+        <p><strong>IT:</strong> Il gioco si salva automaticamente dopo ogni azione. Usa 💾 Backup per esportare il salvataggio in JSON e 📂 Import per caricarlo. ⚠ Reset cancella tutti i progressi.</p>
+        <p><strong>EN:</strong> Game saves automatically after every action. Use 💾 Backup to export your save as JSON and 📂 Import to load it. ⚠ Reset wipes all progress.</p>
+      </div>
+
+    </div>
   </div>
 
   <script src="js/game.js"></script>

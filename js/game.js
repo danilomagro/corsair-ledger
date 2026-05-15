@@ -22,7 +22,190 @@ const PORTS = {
 };
 
 const DANGER_COLOR = { 0: '#3aaa60', 1: '#d4b030', 2: '#e07820', 3: '#cc2424' };
-const DANGER_LABEL = { 0: 'Verde', 1: 'Giallo', 2: 'Arancione', 3: 'Rosso' };
+
+// ─── INTERNATIONALISATION ─────────────────────────────────────────────────────
+
+let currentLang = (function () {
+  try { return localStorage.getItem('corsair_lang') || 'it'; } catch (_) { return 'it'; }
+})();
+
+function T(k) { return (STRINGS[currentLang] || STRINGS.it)[k] ?? k; }
+function DL(level) { return T('danger' + level); }
+function CL(k)     { return T('cargo_' + k); }
+function statLabel(stat) {
+  return { cargo: T('statCargo'), firepower: T('statFirepower'), hull: T('statHull'), speed: T('statSpeed') }[stat] || stat;
+}
+
+const STRINGS = {
+  it: {
+    langBtn: '🇬🇧 EN',   helpBtn: '?',
+    resBarrels: 'Barili',
+    danger0: 'Verde', danger1: 'Giallo', danger2: 'Arancione', danger3: 'Rosso',
+    dangerDesc0: 'Acque sicure. Nessun ostacolo al commercio.',
+    dangerDesc1: 'Qualche pericolo — raccomandata una scorta armata.',
+    dangerDesc2: 'Rotta pericolosa. Prepara la flotta alla battaglia.',
+    dangerDesc3: 'Zona di guerra. Solo le navi più forti sopravvivono.',
+    cargo_tobacco: 'Tabacco', cargo_wine: 'Vino', cargo_cocoa: 'Cacao',
+    fleetTitle: 'FLOTTA',
+    btnBackup: '💾 Backup', btnImport: '📂 Import', btnReset: '⚠ Reset',
+    btnMarket: '🏪 Mercato', btnLog: '📜 Log',
+    logPanelTitle: 'LOG EVENTI',
+    invLabel: 'Stiva ·',
+    statusAtSea: '⛵ In missione', statusDamaged: '🔴 Danneggiata', statusDocked: '⚓ In porto',
+    repairBtn: (cost) => `🔧 Ripara (${cost} ◆)`,
+    upgradeBtn: '⚙ Upgrade',
+    statCargo: '📦 Cargo', statFirepower: '💥 Potenza', statHull: '🛡 Scafo', statSpeed: '💨 Velocità',
+    placeholder: 'Seleziona una rotta sulla mappa per iniziare.',
+    missionsOnRoute: '🗝 Missioni completate su questa rotta:',
+    routeUnlocked: 'Sbloccata', availableMissions: 'Missioni disponibili',
+    noCargo: 'Nessun cargo', selectMission: 'Seleziona', insufficientCargo: '⚠ Cargo insufficiente',
+    backBtn: '← Indietro',
+    battleWarning: (s) => `⚔ Rotta pericolosa — si combatte prima di commerciare. Forza nemica: <strong>${s}</strong>`,
+    extremeWarning: "⚠ Traversata estrema — si raccomandano Fregata o Man O'War. Possibile cattura di nave nemica.",
+    selectShips: 'Seleziona le navi:', noShipsAvail: 'Nessuna nave disponibile in porto.',
+    fleetVsEnemy: (fp, e) => `Potenza flotta: <strong>${fp}</strong> vs Nemico: <strong>${e}</strong>`,
+    victoryPct: (p) => `${p}% di vittoria`,
+    fireBarrelsLabel: '🔥 Fire Barrels:', youHave: 'hai',
+    fbBonus: (n) => `+${n} potenza`,
+    timeEst: (m) => `⏱ Tempo stimato: <strong>${m} min</strong>`,
+    launchBtn: '⛵ Lancia Missione', selectShipFirst: 'Seleziona almeno una nave',
+    damagedReason: (cost) => `🔴 Danneggiata — ripara prima (${cost} ◆)`,
+    lockedBadge: '🔒 Bloccata',
+    lockedDesc: 'Rotta inesplorata. Guadagna esperienza sulle rotte note per aprire nuovi orizzonti commerciali.',
+    howToUnlock: '🗺 Come sbloccare',
+    completeMissions: 'Completa', missionsWord: 'missioni su',
+    stillNeed: 'mancano ancora', navalCost: 'di spesa navale', youHaveR: 'hai',
+    unlockChainTitle: '🔗 Sblocca a sua volta',
+    missionsCompletedOf: (d, n) => `${d} / ${n} missioni completate`,
+    marketTitle: '🏪 Cantiere Navale', closeBtnTxt: '✕ Chiudi',
+    buyShipSection: 'Acquista nave', sellShipSection: 'Vendi nave',
+    docksFullBtn: '🚫 Moli pieni', buyBtn: 'Acquista', insufficientFunds: '⚠ Fondi insufficienti',
+    noDockedShips: 'Nessuna nave ormeggiata disponibile per la vendita.',
+    sellBtn: 'Vendi', lastShipBtn: 'Ultima nave',
+    suppliesTitle: '🔥 Rifornimenti', barrelCost: 'Fire Barrel — <strong>5 ◆</strong> cad.',
+    barrelStock: (n, g) => `Hai ${n} barili · ${g} ◆`,
+    realesAvail: (r) => `⚜ Reales disponibili: <strong>${r}</strong>`,
+    upgradeTitle: (name) => `⚙ Upgrade — ${name}`, statMax: '★ MAX',
+    battleHeader: (route) => `⚔ Battaglia — ${route}`,
+    battleVictory: '⚔ VITTORIA', battleDefeat: '💀 SCONFITTA', battleContinue: 'Continua',
+    victoryBody: (l) => `Nemici respinti. Pericolo ridotto a <strong>${l}</strong>.<br>La missione è partita.`,
+    defeatBody:  (s) => `<strong>${s}</strong> è stata colpita nel combattimento.<br>La flotta si ritira in porto.`,
+    captureTitle: '⚓ Nave Catturata', captureOutcome: '⚓ PREDA!',
+    captureBody: (n, t) => `Una nave nemica si è arresa durante la missione.<br><strong>${n}</strong> (${t}) ora batte la tua bandiera e<br>è ancorata al porto in attesa di ordini.`,
+    toFleetBtn: 'Alla flotta',
+    activeMissionsTitle: 'Missioni in corso',
+    missionReady: '✅ Pronta al ritiro',
+    timeRemaining: (m, s) => `${m}:${String(s).padStart(2, '0')} rimanenti`,
+    collectBtn: 'Ritira bottino', readyLabel: '✓ PRONTA',
+    logBattleWon:     (route, d)       => `⚔ Battaglia vinta su ${route}! Pericolo → ${d}.`,
+    logBattleLost:    (route, ship)    => `⚔ Battaglia persa su ${route}. ${ship} è danneggiata!`,
+    logMissionLaunch: (name, route, m) => `⛵ ${name} avviata su ${route} (${m} min).`,
+    logMissionDone:   (name, loot)     => `✅ ${name} completata! Bottino: ${loot}`,
+    logRouteUnlock:   (label)          => `🗺 Nuova rotta sbloccata: ${label}!`,
+    logUnlockCost:    (cost)           => ` (−${cost.toLocaleString('it-IT')} R)`,
+    logRepairOk:      (name, cost)     => `🔧 ${name} riparata per ${cost} ◆.`,
+    logRepairFail:    (name, cost)     => `❌ Gemmes insufficienti per riparare ${name} (servono ${cost} ◆).`,
+    logBuyOk:         (type, name, p)  => `🏪 ${type} acquistata: ${name} (−${p.toLocaleString('it-IT')} R).`,
+    logBuyFail:       (type)           => `❌ Reales insufficienti per acquistare ${type}.`,
+    logDocksFull:     ()               => `❌ Moli pieni — vendi o perde una nave prima.`,
+    logSellOk:        (name, p)        => `🏪 ${name} venduta per ${p.toLocaleString('it-IT')} R.`,
+    logSellFail:      ()               => `❌ Non puoi vendere l'ultima nave della flotta.`,
+    logUpgradeOk:     (ship, s, lv, p) => `⚙ ${ship}: ${s} Liv.${lv} (−${p.toLocaleString('it-IT')} R).`,
+    logUpgradeFail:   (cost)           => `❌ Reales insufficienti per upgrade (servono ${cost.toLocaleString('it-IT')} R).`,
+    logBarrelsOk:     (qty, tot)       => `🔥 Acquistati ${qty} barili di fuoco (−${tot} ◆).`,
+    logBarrelsFail:   (tot)            => `❌ Gemmes insufficienti (servono ${tot} ◆).`,
+    logCaptureOk:     (name, type)     => `⚓ Nave nemica catturata: ${name} (${type})!`,
+    logCaptureNoSlot: ()               => `⚓ Nave nemica sconfitta, ma i moli sono pieni — impossibile portarla in porto.`,
+    resetConfirm: 'Sei sicuro? Tutti i progressi saranno cancellati.',
+    importErrFile: 'File save non valido', importErrPrefix: 'Errore import: ',
+    welcome: 'Benvenuto, Capitano. La flotta è in attesa dei tuoi ordini.',
+    locale: 'it-IT',
+  },
+  en: {
+    langBtn: '🇮🇹 IT',   helpBtn: '?',
+    resBarrels: 'Barrels',
+    danger0: 'Safe', danger1: 'Caution', danger2: 'Dangerous', danger3: 'Warzone',
+    dangerDesc0: 'Safe waters. No obstacles to trade.',
+    dangerDesc1: 'Some danger — armed escort recommended.',
+    dangerDesc2: 'Dangerous route. Prepare your fleet for battle.',
+    dangerDesc3: 'War zone. Only the strongest ships survive.',
+    cargo_tobacco: 'Tobacco', cargo_wine: 'Wine', cargo_cocoa: 'Cocoa',
+    fleetTitle: 'FLEET',
+    btnBackup: '💾 Backup', btnImport: '📂 Import', btnReset: '⚠ Reset',
+    btnMarket: '🏪 Market', btnLog: '📜 Log',
+    logPanelTitle: 'EVENT LOG',
+    invLabel: 'Hold ·',
+    statusAtSea: '⛵ At sea', statusDamaged: '🔴 Damaged', statusDocked: '⚓ In port',
+    repairBtn: (cost) => `🔧 Repair (${cost} ◆)`,
+    upgradeBtn: '⚙ Upgrade',
+    statCargo: '📦 Cargo', statFirepower: '💥 Firepower', statHull: '🛡 Hull', statSpeed: '💨 Speed',
+    placeholder: 'Select a route on the map to begin.',
+    missionsOnRoute: '🗝 Missions completed on this route:',
+    routeUnlocked: 'Unlocked', availableMissions: 'Available missions',
+    noCargo: 'No cargo', selectMission: 'Select', insufficientCargo: '⚠ Insufficient cargo',
+    backBtn: '← Back',
+    battleWarning: (s) => `⚔ Dangerous route — battle before trading. Enemy strength: <strong>${s}</strong>`,
+    extremeWarning: "⚠ Extreme crossing — Frigate or Man O'War recommended. Enemy ship capture possible.",
+    selectShips: 'Select ships:', noShipsAvail: 'No ships available in port.',
+    fleetVsEnemy: (fp, e) => `Fleet power: <strong>${fp}</strong> vs Enemy: <strong>${e}</strong>`,
+    victoryPct: (p) => `${p}% victory chance`,
+    fireBarrelsLabel: '🔥 Fire Barrels:', youHave: 'you have',
+    fbBonus: (n) => `+${n} power`,
+    timeEst: (m) => `⏱ Estimated time: <strong>${m} min</strong>`,
+    launchBtn: '⛵ Launch Mission', selectShipFirst: 'Select at least one ship',
+    damagedReason: (cost) => `🔴 Damaged — repair first (${cost} ◆)`,
+    lockedBadge: '🔒 Locked',
+    lockedDesc: 'Uncharted route. Gain experience on known routes to open new trade horizons.',
+    howToUnlock: '🗺 How to unlock',
+    completeMissions: 'Complete', missionsWord: 'missions on',
+    stillNeed: 'still need', navalCost: 'naval expenditure', youHaveR: 'you have',
+    unlockChainTitle: '🔗 Also unlocks',
+    missionsCompletedOf: (d, n) => `${d} / ${n} missions completed`,
+    marketTitle: '🏪 Shipyard', closeBtnTxt: '✕ Close',
+    buyShipSection: 'Buy ship', sellShipSection: 'Sell ship',
+    docksFullBtn: '🚫 Docks full', buyBtn: 'Buy', insufficientFunds: '⚠ Insufficient funds',
+    noDockedShips: 'No docked ships available for sale.',
+    sellBtn: 'Sell', lastShipBtn: 'Last ship',
+    suppliesTitle: '🔥 Supplies', barrelCost: 'Fire Barrel — <strong>5 ◆</strong> each.',
+    barrelStock: (n, g) => `You have ${n} barrels · ${g} ◆`,
+    realesAvail: (r) => `⚜ Reales available: <strong>${r}</strong>`,
+    upgradeTitle: (name) => `⚙ Upgrade — ${name}`, statMax: '★ MAX',
+    battleHeader: (route) => `⚔ Battle — ${route}`,
+    battleVictory: '⚔ VICTORY', battleDefeat: '💀 DEFEAT', battleContinue: 'Continue',
+    victoryBody: (l) => `Enemies repelled. Danger reduced to <strong>${l}</strong>.<br>Mission launched.`,
+    defeatBody:  (s) => `<strong>${s}</strong> was hit in combat.<br>The fleet retreats to port.`,
+    captureTitle: '⚓ Ship Captured', captureOutcome: '⚓ PRIZE!',
+    captureBody: (n, t) => `An enemy ship surrendered during the mission.<br><strong>${n}</strong> (${t}) now flies your flag and<br>is anchored in port awaiting orders.`,
+    toFleetBtn: 'To fleet',
+    activeMissionsTitle: 'Active missions',
+    missionReady: '✅ Ready to collect',
+    timeRemaining: (m, s) => `${m}:${String(s).padStart(2, '0')} remaining`,
+    collectBtn: 'Collect loot', readyLabel: '✓ READY',
+    logBattleWon:     (route, d)       => `⚔ Battle won on ${route}! Danger → ${d}.`,
+    logBattleLost:    (route, ship)    => `⚔ Battle lost on ${route}. ${ship} is damaged!`,
+    logMissionLaunch: (name, route, m) => `⛵ ${name} launched on ${route} (${m} min).`,
+    logMissionDone:   (name, loot)     => `✅ ${name} complete! Loot: ${loot}`,
+    logRouteUnlock:   (label)          => `🗺 New route unlocked: ${label}!`,
+    logUnlockCost:    (cost)           => ` (−${cost.toLocaleString('en-US')} R)`,
+    logRepairOk:      (name, cost)     => `🔧 ${name} repaired for ${cost} ◆.`,
+    logRepairFail:    (name, cost)     => `❌ Not enough Gems to repair ${name} (need ${cost} ◆).`,
+    logBuyOk:         (type, name, p)  => `🏪 ${type} purchased: ${name} (−${p.toLocaleString('en-US')} R).`,
+    logBuyFail:       (type)           => `❌ Not enough Reales to buy ${type}.`,
+    logDocksFull:     ()               => `❌ Docks full — sell a ship first.`,
+    logSellOk:        (name, p)        => `🏪 ${name} sold for ${p.toLocaleString('en-US')} R.`,
+    logSellFail:      ()               => `❌ You cannot sell your last ship.`,
+    logUpgradeOk:     (ship, s, lv, p) => `⚙ ${ship}: ${s} Lv.${lv} (−${p.toLocaleString('en-US')} R).`,
+    logUpgradeFail:   (cost)           => `❌ Not enough Reales for upgrade (need ${cost.toLocaleString('en-US')} R).`,
+    logBarrelsOk:     (qty, tot)       => `🔥 Bought ${qty} fire barrel(s) (−${tot} ◆).`,
+    logBarrelsFail:   (tot)            => `❌ Not enough Gems (need ${tot} ◆).`,
+    logCaptureOk:     (name, type)     => `⚓ Enemy ship captured: ${name} (${type})!`,
+    logCaptureNoSlot: ()               => `⚓ Enemy ship defeated, but docks are full — cannot bring her to port.`,
+    resetConfirm: 'Are you sure? All progress will be lost.',
+    importErrFile: 'Invalid save file', importErrPrefix: 'Import error: ',
+    welcome: 'Welcome, Captain. The fleet awaits your orders.',
+    locale: 'en-US',
+  },
+};
 
 // Quadratic bezier control points for each route — one unique arc per route so
 // overlapping routes in the Caribbean cluster are always visually separable.
@@ -241,7 +424,7 @@ const INITIAL_STATE = {
   activeMissions: [],
   unlockedPorts: ['nassau', 'havana', 'tortuga', 'port_royal', 'charleston', 'boston', 'dakar', 'cape_verde'],
   dockSlots: 10,
-  eventLog: ['Benvenuto, Capitano. La flotta è in attesa dei tuoi ordini.'],
+  eventLog: [], // populated at init with T('welcome')
 };
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
@@ -296,7 +479,7 @@ function saveState() {
 }
 
 function resetState() {
-  if (!confirm('Sei sicuro? Tutti i progressi saranno cancellati.')) return false;
+  if (!confirm(T('resetConfirm'))) return false;
   state = deepClone(INITIAL_STATE);
   saveState();
   return true;
@@ -313,13 +496,13 @@ function exportSave() {
 async function importSave(file) {
   const text   = await file.text();
   const parsed = JSON.parse(text);
-  if (!parsed.version || !parsed.player) throw new Error('File save non valido');
+  if (!parsed.version || !parsed.player) throw new Error(T('importErrFile'));
   state = parsed;
   saveState();
 }
 
 function addLog(msg) {
-  const t = new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+  const t = new Date().toLocaleTimeString(T('locale'), { hour: '2-digit', minute: '2-digit' });
   state.eventLog.unshift(`[${t}] ${msg}`);
   if (state.eventLog.length > 60) state.eventLog.length = 60;
 }
@@ -376,13 +559,13 @@ function launchMission({ routeId, missionId, shipIds, fireBarrelsUsed }) {
     const won = Math.random() < calculateOdds(shipIds, routeId, fireBarrelsUsed);
     if (won) {
       routeState.dangerLevel -= 1;
-      battleResult = { outcome: 'victory', routeLabel: routeData.label, newDangerLabel: DANGER_LABEL[routeState.dangerLevel] };
-      addLog(`⚔ Battaglia vinta su ${routeData.label}! Pericolo → ${battleResult.newDangerLabel}.`);
+      battleResult = { outcome: 'victory', routeLabel: routeData.label, newDangerLabel: DL(routeState.dangerLevel) };
+      addLog(T('logBattleWon')(routeData.label, battleResult.newDangerLabel));
     } else {
       const victimId = shipIds[Math.floor(Math.random() * shipIds.length)];
       const victim   = state.fleet.find(s => s.id === victimId);
       victim.status  = 'damaged';
-      addLog(`⚔ Battaglia persa su ${routeData.label}. ${victim.name} è danneggiata!`);
+      addLog(T('logBattleLost')(routeData.label, victim.name));
       saveState();
       return { success: false, battle: { outcome: 'defeat', routeLabel: routeData.label, damagedShip: victim.name } };
     }
@@ -399,7 +582,7 @@ function launchMission({ routeId, missionId, shipIds, fireBarrelsUsed }) {
     reward: mission.reward, missionName: mission.name, routeLabel: routeData.label,
   });
 
-  addLog(`⛵ ${mission.name} avviata su ${routeData.label} (${minutes} min).`);
+  addLog(T('logMissionLaunch')(mission.name, routeData.label, minutes));
   saveState();
   return { success: true, minutes, battle: battleResult };
 }
@@ -429,7 +612,7 @@ function collectMission(activeMissionId) {
     reward.reales      ? `${reward.reales} Reales`  : '',
     reward.gemmes      ? `${reward.gemmes} Gemmes`  : '',
     reward.fireBarrels ? `${reward.fireBarrels} 🔥` : '',
-    reward.cargo ? Object.entries(reward.cargo).map(([t, a]) => `${a} ${CARGO_LABELS[t]}`).join(', ') : '',
+    reward.cargo ? Object.entries(reward.cargo).map(([t, a]) => `${a} ${CL(t)}`).join(', ') : '',
   ].filter(Boolean).join(' + ');
 
   // Track progress and check for route unlocks
@@ -451,13 +634,13 @@ function collectMission(activeMissionId) {
       };
       state.fleet.push(captured);
       lastCaptureResult = { shipName: captured.name, shipType: SHIP_TYPES[captured.type].name };
-      addLog(`⚓ Nave nemica catturata: ${captured.name} (${SHIP_TYPES[captured.type].name})!`);
+      addLog(T('logCaptureOk')(captured.name, SHIP_TYPES[captured.type].name));
     } else {
-      addLog(`⚓ Nave nemica sconfitta, ma i moli sono pieni — impossibile portarla in porto.`);
+      addLog(T('logCaptureNoSlot')());
     }
   }
 
-  addLog(`✅ ${am.missionName} completata! Bottino: ${parts}`);
+  addLog(T('logMissionDone')(am.missionName, parts));
   saveState();
 }
 
@@ -470,8 +653,8 @@ function checkRouteUnlocks() {
     if (cost && state.player.reales < cost) return; // missioni ok ma non abbastanza Reales
     if (cost) state.player.reales -= cost;
     rs.unlocked = true;
-    const costStr = cost ? ` (−${cost.toLocaleString('it-IT')} R)` : '';
-    addLog(`🗺 Nuova rotta sbloccata: ${ROUTES[routeId].label}!${costStr}`);
+    const costStr = cost ? T('logUnlockCost')(cost) : '';
+    addLog(T('logRouteUnlock')(ROUTES[routeId].label) + costStr);
   });
 }
 
@@ -480,12 +663,12 @@ function repairShip(shipId) {
   if (!ship || ship.status !== 'damaged') return;
   const cost = SHIP_TYPES[ship.type].repairCost;
   if (state.player.gemmes < cost) {
-    addLog(`❌ Gemmes insufficienti per riparare ${ship.name} (servono ${cost} ◆).`);
+    addLog(T('logRepairFail')(ship.name, cost));
     return;
   }
   state.player.gemmes -= cost;
   ship.status = 'docked'; ship.damage = 0;
-  addLog(`🔧 ${ship.name} riparata per ${cost} ◆.`);
+  addLog(T('logRepairOk')(ship.name, cost));
   saveState();
 }
 
@@ -494,8 +677,8 @@ function repairShip(shipId) {
 function buyShip(typeId) {
   const price = SHIP_MARKET[typeId]?.buyPrice;
   if (!price) return;
-  if (state.player.reales < price) { addLog(`❌ Reales insufficienti per acquistare ${SHIP_TYPES[typeId].name}.`); return; }
-  if (state.fleet.length >= state.dockSlots) { addLog(`❌ Moli pieni — vendi o perde una nave prima.`); return; }
+  if (state.player.reales < price) { addLog(T('logBuyFail')(SHIP_TYPES[typeId].name)); return; }
+  if (state.fleet.length >= state.dockSlots) { addLog(T('logDocksFull')()); return; }
   state.player.reales -= price;
   const newShip = {
     id: `ship_${Date.now()}`,
@@ -504,18 +687,18 @@ function buyShip(typeId) {
     upgrades: { cargo: 0, firepower: 0, hull: 0, speed: 0 },
   };
   state.fleet.push(newShip);
-  addLog(`🏪 ${SHIP_TYPES[typeId].name} acquistata: ${newShip.name} (−${price.toLocaleString('it-IT')} R).`);
+  addLog(T('logBuyOk')(SHIP_TYPES[typeId].name, newShip.name, price));
   saveState();
 }
 
 function sellShip(shipId) {
   const ship = state.fleet.find(s => s.id === shipId);
   if (!ship || ship.status !== 'docked') return;
-  if (state.fleet.length <= 1) { addLog(`❌ Non puoi vendere l'ultima nave della flotta.`); return; }
+  if (state.fleet.length <= 1) { addLog(T('logSellFail')()); return; }
   const price = SHIP_MARKET[ship.type]?.sellPrice || 0;
   state.fleet = state.fleet.filter(s => s.id !== shipId);
   state.player.reales += price;
-  addLog(`🏪 ${ship.name} venduta per ${price.toLocaleString('it-IT')} R.`);
+  addLog(T('logSellOk')(ship.name, price));
   saveState();
 }
 
@@ -526,20 +709,20 @@ function upgradeShip(shipId, stat) {
   const level = ship.upgrades[stat] || 0;
   if (level >= SHIP_UPGRADE_MAX) return;
   const cost = SHIP_UPGRADE_STAT[stat].baseCost * (level + 1);
-  if (state.player.reales < cost) { addLog(`❌ Reales insufficienti per upgrade (servono ${cost.toLocaleString('it-IT')} R).`); return; }
+  if (state.player.reales < cost) { addLog(T('logUpgradeFail')(cost)); return; }
   state.player.reales -= cost;
   ship.upgrades[stat] = level + 1;
-  addLog(`⚙ ${ship.name}: ${SHIP_UPGRADE_STAT[stat].label} Liv.${level + 1} (−${cost.toLocaleString('it-IT')} R).`);
+  addLog(T('logUpgradeOk')(ship.name, statLabel(stat), level + 1, cost));
   saveState();
 }
 
 function buyFireBarrels(qty) {
   const costEach = 5; // Gemmes per barrel
   const total = costEach * qty;
-  if (state.player.gemmes < total) { addLog(`❌ Gemmes insufficienti (servono ${total} ◆).`); return; }
+  if (state.player.gemmes < total) { addLog(T('logBarrelsFail')(total)); return; }
   state.player.gemmes -= total;
   state.player.fireBarrels += qty;
-  addLog(`🔥 Acquistati ${qty} barili di fuoco (−${total} ◆).`);
+  addLog(T('logBarrelsOk')(qty, total));
   saveState();
 }
 
@@ -597,9 +780,26 @@ function renderAll() {
 }
 
 function renderHeader() {
-  document.getElementById('res-reales').textContent  = state.player.reales.toLocaleString('it-IT');
+  document.getElementById('res-reales').textContent  = state.player.reales.toLocaleString(T('locale'));
   document.getElementById('res-gemmes').textContent  = state.player.gemmes;
   document.getElementById('res-barrels').textContent = state.player.fireBarrels;
+  // Dynamic text that changes with language
+  const btnLang = document.getElementById('btn-lang');
+  if (btnLang) btnLang.textContent = T('langBtn');
+  const fleetTitle = document.getElementById('fleet-title');
+  if (fleetTitle) fleetTitle.textContent = T('fleetTitle');
+  const logHeader = document.querySelector('#log-header span');
+  if (logHeader) logHeader.textContent = T('logPanelTitle');
+  const btnMarket = document.getElementById('btn-market');
+  if (btnMarket) btnMarket.textContent = T('btnMarket');
+  const btnLog = document.getElementById('btn-log');
+  if (btnLog) btnLog.textContent = T('btnLog');
+  const btnReset = document.getElementById('btn-reset');
+  if (btnReset) btnReset.textContent = T('btnReset');
+  const btnBackup = document.getElementById('btn-save-export');
+  if (btnBackup) btnBackup.textContent = T('btnBackup');
+  const resBarrelsLabel = document.getElementById('res-barrels-label');
+  if (resBarrelsLabel) resBarrelsLabel.textContent = T('resBarrels');
 }
 
 // SVG helpers
@@ -858,7 +1058,7 @@ function renderMap() {
     }
     if (ready) {
       const am = state.activeMissions.find(m => m.routeId === route.id && m.completesAt <= now);
-      svgText(svg, '✓ PRONTA', p2.x, p2.y - 14, {
+      svgText(svg, T('readyLabel'), p2.x, p2.y - 14, {
         'text-anchor': 'middle', 'font-size': 8.5, fill: '#3a6a48',
         'font-weight': 'bold', 'font-family': 'Georgia, serif', 'letter-spacing': 0.8,
       });
@@ -951,23 +1151,23 @@ function renderFleet() {
   container.innerHTML = state.fleet.map(ship => {
     const st      = SHIP_TYPES[ship.type];
     const cls     = ship.status === 'at_sea' ? 'at-sea' : ship.status === 'damaged' ? 'damaged' : 'docked';
-    const lbl     = ship.status === 'at_sea' ? '⛵ In missione' : ship.status === 'damaged' ? '🔴 Danneggiata' : '⚓ In porto';
+    const lbl     = ship.status === 'at_sea' ? T('statusAtSea') : ship.status === 'damaged' ? T('statusDamaged') : T('statusDocked');
     return `<div class="ship-card ${cls}">
       <div class="ship-header">
         <span class="ship-name">${ship.name}</span>
         <span class="ship-type-badge">${st.name}</span>
       </div>
       <div class="ship-stats">
-        <span title="Cargo">📦 ${st.cargo}</span>
-        <span title="Firepower">💥 ${st.firepower}</span>
-        <span title="Hull">🛡 ${st.hull}</span>
-        <span title="Speed">💨 ${st.speed}</span>
+        <span title="${T('statCargo')}">📦 ${getEffectiveStat(ship, 'cargo')}</span>
+        <span title="${T('statFirepower')}">💥 ${getEffectiveStat(ship, 'firepower')}</span>
+        <span title="${T('statHull')}">🛡 ${getEffectiveStat(ship, 'hull')}</span>
+        <span title="${T('statSpeed')}">💨 ${getEffectiveStat(ship, 'speed')}</span>
       </div>
       <div class="ship-status ${cls}">${lbl}</div>
       ${ship.status === 'damaged'
-        ? `<button class="btn-repair" data-ship="${ship.id}">🔧 Ripara (${st.repairCost} ◆)</button>`
+        ? `<button class="btn-repair" data-ship="${ship.id}">${T('repairBtn')(st.repairCost)}</button>`
         : ship.status === 'docked'
-          ? `<button class="btn-upgrade-ship" data-ship="${ship.id}">⚙ Upgrade</button>`
+          ? `<button class="btn-upgrade-ship" data-ship="${ship.id}">${T('upgradeBtn')}</button>`
           : ''}
     </div>`;
   }).join('');
@@ -995,17 +1195,14 @@ function renderPanel() {
   if (!routeState.unlocked) { renderLockedRoutePanel(container, route); return; }
   const dl         = routeState.dangerLevel;
   const color      = DANGER_COLOR[dl];
-  const dlabel     = DANGER_LABEL[dl];
+  const dlabel     = DL(dl);
   selectedMissionId ? renderMissionDetail(container, route, dl, color, dlabel)
                     : renderRouteOverview(container, route, dl, color, dlabel);
 }
 
 function renderRouteOverview(container, route, dl, color, dlabel) {
   const amList = getActiveMissionsWithTime().filter(m => m.routeId === route.id);
-  const dangerDescText = ['Acque sicure. Nessun ostacolo al commercio.',
-    'Qualche pericolo — raccomandata una scorta armata.',
-    'Rotta pericolosa. Prepara la flotta alla battaglia.',
-    'Zona di guerra. Solo le navi più forti sopravvivono.'][dl] || '';
+  const dangerDescText = T('dangerDesc' + dl);
 
   let html = `<div class="panel-route-header">
     <h3>${route.label}</h3>
@@ -1021,7 +1218,7 @@ function renderRouteOverview(container, route, dl, color, dlabel) {
   if (unlocks.length) {
     const done = (state.routes[route.id].missionsCompleted || 0);
     html += `<div class="route-unlocks-section">
-      <div class="route-unlocks-title">🗝 Missioni completate su questa rotta: <strong>${done}</strong></div>`;
+      <div class="route-unlocks-title">${T('missionsOnRoute')} <strong>${done}</strong></div>`;
     unlocks.forEach(([rid, cond]) => {
       const pct      = Math.min(100, Math.round(done / cond.needed * 100));
       const barColor = pct >= 100 ? '#4a7c59' : pct >= 50 ? '#b89a2a' : '#5a6878';
@@ -1029,7 +1226,7 @@ function renderRouteOverview(container, route, dl, color, dlabel) {
       html += `<div class="route-unlock-item ${isUnlocked ? 'already-unlocked' : ''}">
         <div class="route-unlock-row">
           <span class="route-unlock-name">${isUnlocked ? '✅' : '🔒'} ${ROUTES[rid].label}</span>
-          <span class="route-unlock-req">${isUnlocked ? 'Sbloccata' : `${done}/${cond.needed}`}</span>
+          <span class="route-unlock-req">${isUnlocked ? T('routeUnlocked') : `${done}/${cond.needed}`}</span>
         </div>
         ${!isUnlocked ? `<div class="odds-bar-wrap"><div class="odds-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>` : ''}
       </div>`;
@@ -1037,17 +1234,17 @@ function renderRouteOverview(container, route, dl, color, dlabel) {
     html += `</div>`;
   }
 
-  html += `<h4 class="missions-title">Missioni disponibili</h4>`;
+  html += `<h4 class="missions-title">${T('availableMissions')}</h4>`;
   route.missions.forEach(m => {
     const ok     = canAffordCargo(m.requiredCargo);
-    const reqStr = Object.entries(m.requiredCargo).map(([t, a]) => `${a} ${CARGO_LABELS[t]}`).join(', ') || 'Nessun cargo';
+    const reqStr = Object.entries(m.requiredCargo).map(([t, a]) => `${a} ${CL(t)}`).join(', ') || T('noCargo');
     html += `<div class="mission-card ${ok ? '' : 'unaffordable'}">
       <div class="mission-name">${m.name}</div>
       <div class="mission-info">🧳 ${reqStr}</div>
       <div class="mission-info">💰 ${rewardStr(m.reward)}</div>
       <div class="mission-info">⏱ ~${m.baseMinutes} min (base)</div>
       <button class="btn-select-mission" data-mission="${m.id}" ${ok ? '' : 'disabled'}>
-        ${ok ? 'Seleziona' : '⚠ Cargo insufficiente'}
+        ${ok ? T('selectMission') : T('insufficientCargo')}
       </button>
     </div>`;
   });
@@ -1076,11 +1273,11 @@ function renderMissionDetail(container, route, dl, color, dlabel) {
   const reqHtml = Object.entries(mission.requiredCargo).length === 0 ? '—'
     : Object.entries(mission.requiredCargo).map(([t, a]) => {
         const has = state.player.cargo[t] || 0;
-        return `${a} ${CARGO_LABELS[t]} <span class="${has >= a ? 'ok' : 'err'}">(hai ${has})</span>`;
+        return `${a} ${CL(t)} <span class="${has >= a ? 'ok' : 'err'}">(${T('youHave')} ${has})</span>`;
       }).join(', ');
 
   let html = `<div class="panel-route-header">
-    <button class="btn-back">← Indietro</button>
+    <button class="btn-back">${T('backBtn')}</button>
     <h3>${mission.name}</h3>
   </div>
   <div class="mission-meta">
@@ -1091,13 +1288,13 @@ function renderMissionDetail(container, route, dl, color, dlabel) {
   <div class="mission-req">💰 ${rewardStr(mission.reward)}</div>`;
 
   if (dangerous) {
-    html += `<div class="battle-warning">⚔ Rotta pericolosa — si combatte prima di commerciare. Forza nemica: <strong>${route.enemyStrength}</strong></div>`;
-    if (dl === 3) html += `<div class="battle-warning" style="border-left-color:#8b6914;background:#f8f0e0;color:#4a3010">⚠ Traversata estrema — si raccomandano Fregata o Man O'War. Possibile cattura di nave nemica.</div>`;
+    html += `<div class="battle-warning">${T('battleWarning')(route.enemyStrength)}</div>`;
+    if (dl === 3) html += `<div class="battle-warning" style="border-left-color:#8b6914;background:#f8f0e0;color:#4a3010">${T('extremeWarning')}</div>`;
   }
 
-  html += `<h4 class="ship-select-title">Seleziona le navi:</h4>`;
+  html += `<h4 class="ship-select-title">${T('selectShips')}</h4>`;
   if (!available.length) {
-    html += `<p class="no-ships">Nessuna nave disponibile in porto.</p>`;
+    html += `<p class="no-ships">${T('noShipsAvail')}</p>`;
   } else {
     available.forEach(ship => {
       const st       = SHIP_TYPES[ship.type];
@@ -1107,8 +1304,8 @@ function renderMissionDetail(container, route, dl, color, dlabel) {
         <input type="checkbox" data-ship="${ship.id}" ${chk ? 'checked' : ''} ${isDamaged ? 'disabled' : ''}>
         <span class="ship-name">${ship.name}</span>
         <span class="ship-type-badge">${st.name}</span>
-        <span class="ship-mini-stats">💥${st.firepower} 🛡${st.hull} 💨${st.speed}</span>
-        ${isDamaged ? `<span class="ship-unavail-reason">🔴 Danneggiata — ripara prima (${st.repairCost} ◆)</span>` : ''}
+        <span class="ship-mini-stats">💥${getEffectiveStat(ship,'firepower')} 🛡${getEffectiveStat(ship,'hull')} 💨${getEffectiveStat(ship,'speed')}</span>
+        ${isDamaged ? `<span class="ship-unavail-reason">${T('damagedReason')(st.repairCost)}</span>` : ''}
       </label>`;
     });
   }
@@ -1118,26 +1315,26 @@ function renderMissionDetail(container, route, dl, color, dlabel) {
     const barColor = pct >= 70 ? '#4a7c59' : pct >= 45 ? '#b89a2a' : '#8b2020';
     const fp       = fleetCombatPower(selArr) + fireBarrelsUsed * 12;
     html += `<div class="odds-section">
-      <div class="odds-label">Potenza flotta: <strong>${fp}</strong> vs Nemico: <strong>${route.enemyStrength}</strong></div>
+      <div class="odds-label">${T('fleetVsEnemy')(fp, route.enemyStrength)}</div>
       <div class="odds-bar-wrap"><div class="odds-bar-fill" style="width:${pct}%;background:${barColor}"></div></div>
-      <div class="odds-pct" style="color:${barColor}">${pct}% di vittoria</div>
+      <div class="odds-pct" style="color:${barColor}">${T('victoryPct')(pct)}</div>
     </div>`;
   }
 
   if (dangerous) {
-    html += `<div class="fire-barrel-row">🔥 Fire Barrels:
+    html += `<div class="fire-barrel-row">${T('fireBarrelsLabel')}
       <button class="btn-fb" data-act="minus">−</button>
       <span class="fb-val">${fireBarrelsUsed}</span>
       <button class="btn-fb" data-act="plus">+</button>
-      <span class="fb-stock">(hai ${state.player.fireBarrels})</span>
-      ${fireBarrelsUsed ? `<span class="fb-bonus">+${fireBarrelsUsed * 12} potenza</span>` : ''}
+      <span class="fb-stock">(${T('youHave')} ${state.player.fireBarrels})</span>
+      ${fireBarrelsUsed ? `<span class="fb-bonus">${T('fbBonus')(fireBarrelsUsed * 12)}</span>` : ''}
     </div>`;
   }
 
-  if (minutes !== null) html += `<div class="time-estimate">⏱ Tempo stimato: <strong>${minutes} min</strong></div>`;
+  if (minutes !== null) html += `<div class="time-estimate">${T('timeEst')(minutes)}</div>`;
 
   html += `<button class="btn-launch" ${selArr.length ? '' : 'disabled'}>
-    ${selArr.length ? '⛵ Lancia Missione' : 'Seleziona almeno una nave'}
+    ${selArr.length ? T('launchBtn') : T('selectShipFirst')}
   </button>`;
 
   container.innerHTML = html;
@@ -1186,7 +1383,7 @@ function renderLockedRoutePanel(container, route) {
   let chainHtml = '';
   if (chain.length) {
     chainHtml = `<div class="unlock-chain">
-      <div class="unlock-chain-title">🔗 Sblocca a sua volta</div>
+      <div class="unlock-chain-title">${T('unlockChainTitle')}</div>
       ${chain.map(([rid]) => `<span class="unlock-chain-item">${ROUTES[rid].label}</span>`).join('')}
     </div>`;
   }
@@ -1194,19 +1391,19 @@ function renderLockedRoutePanel(container, route) {
   container.innerHTML = `
     <div class="panel-route-header">
       <h3>${route.label}</h3>
-      <span class="danger-badge" style="--dc:#5a6878">🔒 Bloccata</span>
+      <span class="danger-badge" style="--dc:#5a6878">${T('lockedBadge')}</span>
     </div>
-    <p class="route-desc">Rotta inesplorata. Guadagna esperienza sulle rotte note per aprire nuovi orizzonti commerciali.</p>
+    <p class="route-desc">${T('lockedDesc')}</p>
     <div class="unlock-req-box">
-      <div class="unlock-req-title">🗺 Come sbloccare</div>
-      <div class="unlock-req-desc">Completa <strong>${cond.needed}</strong> missioni su
-        <strong>${prereq.label}</strong>${remaining > 0 ? ` (mancano ancora <strong>${remaining}</strong>)` : ' ✅'}
-        ${cond.cost ? `<br>+ <strong>${cond.cost.toLocaleString('it-IT')} R</strong> di spesa navale
-          <span class="${state.player.reales >= cond.cost ? 'ok' : 'err'}">(hai ${state.player.reales.toLocaleString('it-IT')} R)</span>` : ''}</div>
+      <div class="unlock-req-title">${T('howToUnlock')}</div>
+      <div class="unlock-req-desc">${T('completeMissions')} <strong>${cond.needed}</strong> ${T('missionsWord')}
+        <strong>${prereq.label}</strong>${remaining > 0 ? ` (${T('stillNeed')} <strong>${remaining}</strong>)` : ' ✅'}
+        ${cond.cost ? `<br>+ <strong>${cond.cost.toLocaleString(T('locale'))} R</strong> ${T('navalCost')}
+          <span class="${state.player.reales >= cond.cost ? 'ok' : 'err'}">(${T('youHaveR')} ${state.player.reales.toLocaleString(T('locale'))} R)</span>` : ''}</div>
       <div class="odds-bar-wrap" style="margin-top:8px">
         <div class="odds-bar-fill" style="width:${pct}%;background:${barColor}"></div>
       </div>
-      <div class="unlock-progress-text" style="color:${barColor}">${done} / ${cond.needed} missioni completate</div>
+      <div class="unlock-progress-text" style="color:${barColor}">${T('missionsCompletedOf')(done, cond.needed)}</div>
     </div>
     ${chainHtml}`;
 }
@@ -1216,11 +1413,11 @@ function renderMarket(container) {
   const canSell = (ship)   => ship.status === 'docked' && state.fleet.length > 1;
 
   let html = `<div class="market-header">
-    <h3>🏪 Cantiere Navale</h3>
-    <button class="btn-back market-close">✕ Chiudi</button>
+    <h3>${T('marketTitle')}</h3>
+    <button class="btn-back market-close">${T('closeBtnTxt')}</button>
   </div>
 
-  <h4 class="market-section-title">Acquista nave</h4>
+  <h4 class="market-section-title">${T('buyShipSection')}</h4>
   <div class="market-buy-grid">`;
 
   Object.entries(SHIP_TYPES).forEach(([typeId, st]) => {
@@ -1229,25 +1426,25 @@ function renderMarket(container) {
     html += `<div class="market-ship-card ${ok ? '' : 'unaffordable'}">
       <div class="market-ship-name">${st.name}</div>
       <div class="ship-stats">
-        <span title="Cargo">📦 ${st.cargo}</span>
-        <span title="Firepower">💥 ${st.firepower}</span>
-        <span title="Hull">🛡 ${st.hull}</span>
-        <span title="Speed">💨 ${st.speed}</span>
+        <span title="${T('statCargo')}">📦 ${st.cargo}</span>
+        <span title="${T('statFirepower')}">💥 ${st.firepower}</span>
+        <span title="${T('statHull')}">🛡 ${st.hull}</span>
+        <span title="${T('statSpeed')}">💨 ${st.speed}</span>
       </div>
-      <div class="market-price">⚜ ${m.buyPrice.toLocaleString('it-IT')} R</div>
+      <div class="market-price">⚜ ${m.buyPrice.toLocaleString(T('locale'))} R</div>
       <button class="btn-buy-ship" data-type="${typeId}" ${ok ? '' : 'disabled'}>
-        ${state.fleet.length >= state.dockSlots ? '🚫 Moli pieni' : ok ? 'Acquista' : '⚠ Fondi insufficienti'}
+        ${state.fleet.length >= state.dockSlots ? T('docksFullBtn') : ok ? T('buyBtn') : T('insufficientFunds')}
       </button>
     </div>`;
   });
   html += `</div>
 
-  <h4 class="market-section-title">Vendi nave</h4>
+  <h4 class="market-section-title">${T('sellShipSection')}</h4>
   <div class="market-sell-list">`;
 
   const docked = state.fleet.filter(s => s.status === 'docked');
   if (!docked.length) {
-    html += `<p class="no-ships">Nessuna nave ormeggiata disponibile per la vendita.</p>`;
+    html += `<p class="no-ships">${T('noDockedShips')}</p>`;
   } else {
     docked.forEach(ship => {
       const m = SHIP_MARKET[ship.type];
@@ -1255,19 +1452,19 @@ function renderMarket(container) {
       html += `<div class="market-sell-row">
         <span class="market-sell-name">${ship.name}</span>
         <span class="ship-type-badge">${SHIP_TYPES[ship.type].name}</span>
-        <span class="market-price">⚜ +${m.sellPrice.toLocaleString('it-IT')} R</span>
+        <span class="market-price">⚜ +${m.sellPrice.toLocaleString(T('locale'))} R</span>
         <button class="btn-sell-ship" data-ship="${ship.id}" ${ok ? '' : 'disabled'}>
-          ${ok ? 'Vendi' : 'Ultima nave'}
+          ${ok ? T('sellBtn') : T('lastShipBtn')}
         </button>
       </div>`;
     });
   }
 
   html += `</div>
-  <h4 class="market-section-title">🔥 Rifornimenti</h4>
+  <h4 class="market-section-title">${T('suppliesTitle')}</h4>
   <div class="market-barrels-row">
-    <span>Fire Barrel — <strong>5 ◆</strong> cad.</span>
-    <span class="fb-stock">Hai ${state.player.fireBarrels} barili · ${state.player.gemmes} ◆</span>
+    <span>${T('barrelCost')}</span>
+    <span class="fb-stock">${T('barrelStock')(state.player.fireBarrels, state.player.gemmes)}</span>
     <button class="btn-buy-barrels" data-qty="1" ${state.player.gemmes >= 5 ? '' : 'disabled'}>+1</button>
     <button class="btn-buy-barrels" data-qty="3" ${state.player.gemmes >= 15 ? '' : 'disabled'}>+3</button>
     <button class="btn-buy-barrels" data-qty="5" ${state.player.gemmes >= 25 ? '' : 'disabled'}>+5</button>
@@ -1292,8 +1489,8 @@ function renderShipUpgradePanel(container, ship) {
   if (!ship.upgrades) ship.upgrades = { cargo: 0, firepower: 0, hull: 0, speed: 0 };
 
   let html = `<div class="market-header">
-    <h3>⚙ Upgrade — ${ship.name}</h3>
-    <button class="btn-back upgrade-close">✕ Chiudi</button>
+    <h3>${T('upgradeTitle')(ship.name)}</h3>
+    <button class="btn-back upgrade-close">${T('closeBtnTxt')}</button>
   </div>
   <div class="upgrade-ship-badge"><span class="ship-type-badge">${st.name}</span></div>
   <div class="upgrade-grid">`;
@@ -1308,18 +1505,18 @@ function renderShipUpgradePanel(container, ship) {
     const canAfford = state.player.reales >= cost;
 
     html += `<div class="upgrade-row">
-      <div class="upgrade-stat-label">${cfg.label}</div>
-      <div class="upgrade-stat-val">${currVal}${!maxed ? ` → <strong>${nextVal}</strong>` : ' ★ MAX'}</div>
+      <div class="upgrade-stat-label">${statLabel(stat)}</div>
+      <div class="upgrade-stat-val">${currVal}${!maxed ? ` → <strong>${nextVal}</strong>` : ` ${T('statMax')}`}</div>
       <div class="upgrade-stars">${'★'.repeat(level)}${'☆'.repeat(SHIP_UPGRADE_MAX - level)}</div>
       <button class="btn-do-upgrade" data-ship="${ship.id}" data-stat="${stat}"
         ${maxed || !canAfford ? 'disabled' : ''}>
-        ${maxed ? 'MAX' : canAfford ? `${cost.toLocaleString('it-IT')} R` : `⚠ ${cost.toLocaleString('it-IT')} R`}
+        ${maxed ? T('statMax') : canAfford ? `${cost.toLocaleString(T('locale'))} R` : `⚠ ${cost.toLocaleString(T('locale'))} R`}
       </button>
     </div>`;
   });
 
   html += `</div>
-  <div class="upgrade-reales">⚜ Reales disponibili: <strong>${state.player.reales.toLocaleString('it-IT')}</strong></div>`;
+  <div class="upgrade-reales">${T('realesAvail')(state.player.reales.toLocaleString(T('locale')))}</div>`;
 
   container.innerHTML = html;
   container.querySelector('.upgrade-close').addEventListener('click', () => { upgradeShipId = null; renderAll(); });
@@ -1333,18 +1530,15 @@ function renderBattleResult(container, battle) {
   container.innerHTML = `
     <div class="battle-result ${isVictory ? 'victory' : 'defeat'}">
       <div class="battle-result-header">
-        <span class="battle-route">⚔ Battaglia — ${battle.routeLabel}</span>
+        <span class="battle-route">${T('battleHeader')(battle.routeLabel)}</span>
       </div>
       <div class="battle-result-outcome">
-        ${isVictory ? '⚔ VITTORIA' : '💀 SCONFITTA'}
+        ${isVictory ? T('battleVictory') : T('battleDefeat')}
       </div>
       <div class="battle-result-body">
-        ${isVictory
-          ? `Nemici respinti. Pericolo ridotto a <strong>${battle.newDangerLabel}</strong>.<br>La missione è partita.`
-          : `<strong>${battle.damagedShip}</strong> è stata colpita nel combattimento.<br>La flotta si ritira in porto.`
-        }
+        ${isVictory ? T('victoryBody')(battle.newDangerLabel) : T('defeatBody')(battle.damagedShip)}
       </div>
-      <button class="btn-battle-continue">Continua</button>
+      <button class="btn-battle-continue">${T('battleContinue')}</button>
     </div>`;
   container.querySelector('.btn-battle-continue').addEventListener('click', () => {
     lastBattleResult = null;
@@ -1355,14 +1549,10 @@ function renderBattleResult(container, battle) {
 function renderCaptureResult(container, capture) {
   container.innerHTML = `
     <div class="battle-result victory">
-      <div class="battle-result-header">⚓ Nave Catturata</div>
-      <div class="battle-result-outcome">⚓ PREDA!</div>
-      <div class="battle-result-body">
-        Una nave nemica si è arresa durante la missione.<br>
-        <strong>${capture.shipName}</strong> (${capture.shipType}) ora batte la tua bandiera e<br>
-        è ancorata al porto in attesa di ordini.
-      </div>
-      <button class="btn-battle-continue">Alla flotta</button>
+      <div class="battle-result-header">${T('captureTitle')}</div>
+      <div class="battle-result-outcome">${T('captureOutcome')}</div>
+      <div class="battle-result-body">${T('captureBody')(capture.shipName, capture.shipType)}</div>
+      <button class="btn-battle-continue">${T('toFleetBtn')}</button>
     </div>`;
   container.querySelector('.btn-battle-continue').addEventListener('click', () => {
     lastCaptureResult = null;
@@ -1373,10 +1563,10 @@ function renderCaptureResult(container, capture) {
 function renderActiveMissionsPanel(container) {
   const missions = getActiveMissionsWithTime();
   if (!missions.length) {
-    container.innerHTML = `<p class="placeholder">Seleziona una rotta sulla mappa per iniziare.</p>`;
+    container.innerHTML = `<p class="placeholder">${T('placeholder')}</p>`;
     return;
   }
-  container.innerHTML = `<h3>Missioni in corso</h3>
+  container.innerHTML = `<h3>${T('activeMissionsTitle')}</h3>
     <div class="active-missions-list">${missions.map(activeMissionCardHtml).join('')}</div>`;
   container.querySelectorAll('.btn-collect').forEach(btn => {
     btn.addEventListener('click', () => { collectMission(btn.dataset.am); renderAll(); });
@@ -1387,14 +1577,14 @@ function activeMissionCardHtml(am) {
   const mins = Math.floor(am.msRemaining / 60000);
   const secs = Math.floor((am.msRemaining % 60000) / 1000);
   const timeHtml = am.ready
-    ? `<span class="ready-text">✅ Pronta al ritiro</span>`
-    : `<span class="countdown">${mins}:${String(secs).padStart(2, '0')} rimanenti</span>`;
+    ? `<span class="ready-text">${T('missionReady')}</span>`
+    : `<span class="countdown">${T('timeRemaining')(mins, secs)}</span>`;
   return `<div class="active-mission-card ${am.ready ? 'ready' : ''}">
     <div class="am-name">${am.missionName}</div>
     <div class="am-route">${am.routeLabel}</div>
     <div class="am-time">${timeHtml}</div>
     <div class="am-reward">💰 ${rewardStr(am.reward)}</div>
-    ${am.ready ? `<button class="btn-collect" data-am="${am.id}">Ritira bottino</button>` : ''}
+    ${am.ready ? `<button class="btn-collect" data-am="${am.id}">${T('collectBtn')}</button>` : ''}
   </div>`;
 }
 
@@ -1402,9 +1592,9 @@ function renderInventory() {
   const el = document.getElementById('inventory-display');
   if (!el) return;
   const { cargo } = state.player;
-  el.innerHTML = `<span class="inv-label">Stiva ·</span>`
-    + Object.entries(CARGO_LABELS)
-        .map(([k, lbl]) => `<span class="cargo-item">${lbl}: <strong>${cargo[k] || 0}</strong></span>`)
+  el.innerHTML = `<span class="inv-label">${T('invLabel')}</span>`
+    + Object.keys(CARGO_LABELS)
+        .map(k => `<span class="cargo-item">${CL(k)}: <strong>${cargo[k] || 0}</strong></span>`)
         .join('');
 }
 
@@ -1421,7 +1611,7 @@ function rewardStr(reward) {
     reward.reales      ? `${reward.reales} Reales`  : '',
     reward.gemmes      ? `${reward.gemmes} ◆`        : '',
     reward.fireBarrels ? `${reward.fireBarrels} 🔥`  : '',
-    reward.cargo ? Object.entries(reward.cargo).map(([t, a]) => `${a} ${CARGO_LABELS[t]}`).join(', ') : '',
+    reward.cargo ? Object.entries(reward.cargo).map(([t, a]) => `${a} ${CL(t)}`).join(', ') : '',
   ].filter(Boolean).join(' + ');
 }
 
@@ -1429,6 +1619,8 @@ function rewardStr(reward) {
 
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
+  // Seed welcome log for fresh saves
+  if (!state.eventLog.length) { state.eventLog.push(T('welcome')); saveState(); }
   renderAll();
   setInterval(renderAll, 1000);
 
@@ -1437,8 +1629,24 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('import-file').addEventListener('change', async e => {
     const file = e.target.files[0]; if (!file) return;
     try { await importSave(file); clearSelection(); renderAll(); }
-    catch (err) { alert('Errore import: ' + err.message); }
+    catch (err) { alert(T('importErrPrefix') + err.message); }
     e.target.value = '';
+  });
+
+  // ── Language toggle ────────────────────────────────────────────────────────
+  document.getElementById('btn-lang')?.addEventListener('click', () => {
+    currentLang = currentLang === 'it' ? 'en' : 'it';
+    try { localStorage.setItem('corsair_lang', currentLang); } catch (_) {}
+    renderAll();
+  });
+
+  // ── Help / manual ──────────────────────────────────────────────────────────
+  const helpPanel = document.getElementById('help-panel');
+  document.getElementById('btn-help')?.addEventListener('click', () => {
+    helpPanel?.classList.toggle('hidden');
+  });
+  document.getElementById('btn-close-help')?.addEventListener('click', () => {
+    helpPanel?.classList.add('hidden');
   });
 
   document.getElementById('btn-reset').addEventListener('click', () => {
