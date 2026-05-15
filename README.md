@@ -45,7 +45,7 @@ A standalone browser mini-game inspired by **Kenway's Fleet** from *Assassin's C
 | `style.css` | All styling (CSS variables, parchment theme) |
 | `js/game.js` | Game logic + SVG renderer — **single file, no build step** |
 
-Works via `file://` — no server needed.
+Works via file:// or any static host — no server, no build, no dependencies.
 
 ---
 
